@@ -10,7 +10,7 @@ const copy = {
     start: 'Start',
     stop: 'Stop',
     inactiveSession: 'Session inactive',
-    startHint: 'Tap anywhere to start listening',
+    startHint: 'Press Start or play a key',
     volume: 'Volume',
     waitingForSound: 'Waiting for a steady sound',
     inTune: 'in tune',
@@ -32,7 +32,7 @@ const copy = {
     start: '\u0421\u0442\u0430\u0440\u0442',
     stop: '\u0421\u0442\u043e\u043f',
     inactiveSession: '\u0421\u0435\u0441\u0441\u0438\u044f \u043d\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u0430',
-    startHint: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0432 \u043b\u044e\u0431\u043e\u0435 \u043c\u0435\u0441\u0442\u043e, \u0447\u0442\u043e\u0431\u044b \u043d\u0430\u0447\u0430\u0442\u044c',
+    startHint: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 Start \u0438\u043b\u0438 \u0441\u044b\u0433\u0440\u0430\u0439\u0442\u0435 \u043a\u043b\u0430\u0432\u0438\u0448\u0443',
     volume: '\u0413\u0440\u043e\u043c\u043a\u043e\u0441\u0442\u044c',
     waitingForSound: '\u0416\u0434\u0443 \u0443\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u044b\u0439 \u0437\u0432\u0443\u043a',
     inTune: '\u0442\u043e\u0447\u043d\u043e',
@@ -58,6 +58,7 @@ const frequency = ref<number | null>(null)
 const note = ref('--')
 const octave = ref('')
 const activeMidi = ref<number | null>(null)
+const pressedMidi = ref<number | null>(null)
 const cents = ref(0)
 const volume = ref(0)
 const errorMessage = ref('')
@@ -68,9 +69,13 @@ let source: MediaStreamAudioSourceNode | null = null
 let stream: MediaStream | null = null
 let animationId = 0
 let sampleBuffer: Float32Array | null = null
+let toneModule: typeof import('tone') | null = null
+let keyboardSynth: import('tone').Synth | null = null
+let pressedMidiTimeout = 0
 
 const t = computed(() => copy[language.value])
 const status = computed(() => t.value.status[statusKey.value])
+const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 
 const centsLabel = computed(() => {
   if (!frequency.value) {
@@ -99,6 +104,37 @@ function resolveLanguage(browserLanguage: string | undefined): Language {
 function setLanguage(nextLanguage: Language) {
   language.value = nextLanguage
   localStorage.setItem('vocalwarm-language', nextLanguage)
+}
+
+async function playKeyboardNote(noteName: string, midi: number) {
+  window.clearTimeout(pressedMidiTimeout)
+  pressedMidi.value = midi
+  pressedMidiTimeout = window.setTimeout(() => {
+    pressedMidi.value = null
+  }, 240)
+
+  if (!toneModule) {
+    toneModule = await import('tone')
+  }
+
+  await toneModule.start()
+
+  if (!keyboardSynth) {
+    keyboardSynth = new toneModule.Synth({
+      oscillator: {
+        type: 'triangle'
+      },
+      envelope: {
+        attack: 0.01,
+        decay: 0.12,
+        sustain: 0.28,
+        release: 0.35
+      }
+    }).toDestination()
+    keyboardSynth.volume.value = -8
+  }
+
+  keyboardSynth.triggerAttackRelease(noteName, '8n')
 }
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number) {
@@ -265,7 +301,11 @@ useHead(() => ({
   }
 }))
 
-onBeforeUnmount(stopListening)
+onBeforeUnmount(() => {
+  window.clearTimeout(pressedMidiTimeout)
+  keyboardSynth?.dispose()
+  stopListening()
+})
 </script>
 
 <template>
@@ -297,11 +337,13 @@ onBeforeUnmount(stopListening)
         </div>
       </div>
 
-      <button v-if="!isListening" class="start-overlay" type="button" @click="startListening">
+      <div v-if="!isListening" class="start-overlay">
         <span class="overlay-kicker">{{ t.inactiveSession }}</span>
-        <span class="overlay-action">{{ t.start }}</span>
+        <button class="overlay-action" type="button" @click="startListening">
+          {{ t.start }}
+        </button>
         <span class="overlay-hint">{{ t.startHint }}</span>
-      </button>
+      </div>
 
       <div class="readout" aria-live="polite">
         <span class="note">{{ note }}</span>
@@ -322,7 +364,7 @@ onBeforeUnmount(stopListening)
         <span>+50</span>
       </div>
 
-      <PianoKeyboard :active-midi="activeMidi" :label="t.keyboardLabel" />
+      <PianoKeyboard :active-midi="displayActiveMidi" :label="t.keyboardLabel" @play-note="playKeyboardNote" />
 
       <div class="volume">
         <div class="volume-label">
@@ -485,7 +527,7 @@ h1 {
     rgba(255, 252, 244, 0.08);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
   backdrop-filter: blur(2px) saturate(1.06);
-  cursor: pointer;
+  pointer-events: none;
   text-align: center;
 }
 
@@ -526,6 +568,8 @@ h1 {
   border-radius: 8px;
   color: #d74f2a;
   background: rgba(255, 252, 244, 0.42);
+  cursor: pointer;
+  pointer-events: auto;
   box-shadow:
     0 18px 60px rgba(31, 41, 37, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.52);

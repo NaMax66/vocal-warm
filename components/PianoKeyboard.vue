@@ -4,6 +4,10 @@ const props = defineProps<{
   label: string
 }>()
 
+const emit = defineEmits<{
+  playNote: [note: string, midi: number]
+}>()
+
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
 
@@ -47,12 +51,13 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
           :class="{ active: key.isActive }"
           :aria-label="key.label"
           :aria-current="key.isActive ? 'true' : undefined"
+          @click="emit('playNote', key.label, key.midi)"
         >
           <span>{{ key.label }}</span>
         </button>
       </div>
 
-      <div class="black-keys" aria-hidden="true">
+      <div class="black-keys">
         <button
           v-for="key in blackKeys"
           :key="key.midi"
@@ -60,7 +65,9 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
           class="piano-key black"
           :class="{ active: key.isActive }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
-          tabindex="-1"
+          :aria-label="key.label"
+          :aria-current="key.isActive ? 'true' : undefined"
+          @click="emit('playNote', key.label, key.midi)"
         >
           <span>{{ key.label }}</span>
         </button>
@@ -112,13 +119,17 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
   align-items: flex-end;
   justify-content: center;
   border: 0;
-  cursor: default;
+  cursor: pointer;
   letter-spacing: 0;
   transition:
     background 120ms ease,
     box-shadow 120ms ease,
     color 120ms ease,
     transform 120ms ease;
+}
+
+.piano-key:active {
+  transform: translateY(1px);
 }
 
 .piano-key.white {

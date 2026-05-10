@@ -14,6 +14,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
 - The app uses the browser Web Audio API and `navigator.mediaDevices.getUserMedia`.
+- Keyboard note playback uses Tone.js (`tone`) with a simple browser synth.
 - Pitch detection is implemented with autocorrelation over an `AnalyserNode` time-domain buffer.
 - The analyser uses `fftSize = 4096`.
 - Microphone constraints intentionally disable `echoCancellation`, `noiseSuppression`, and `autoGainControl` for cleaner pitch tracking.
@@ -27,7 +28,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 
 - Keep VocalWarm focused on vocal warmups and pitch feedback.
 - Prefer simple, readable Vue/Nuxt code before adding libraries.
-- Future useful features: warmup exercises, target-note playback from the keyboard, note history, accuracy scoring, range detection, and localized note naming.
+- Future useful features: warmup exercises, richer keyboard instrument presets, note history, accuracy scoring, range detection, and localized note naming.
 
 ## Run
 
