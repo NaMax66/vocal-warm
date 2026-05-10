@@ -54,9 +54,7 @@ const meterStyle = computed(() => ({
   transform: `translateX(${Math.max(-48, Math.min(48, cents.value * 0.9))}px)`
 }))
 
-const volumeStyle = computed(() => ({
-  width: `${Math.min(100, Math.round(volume.value * 180))}%`
-}))
+const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
   return browserLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
@@ -177,6 +175,8 @@ onBeforeUnmount(() => {
           @stop="stopListening"
         />
 
+        <VolumeMeter :label="t.volume" :status="status" :active-steps="volumeSteps" />
+
         <PitchReadout
           :note="note"
           :octave="octave"
@@ -202,8 +202,6 @@ onBeforeUnmount(() => {
           @hold-selected-note="holdSelectedNote"
           @release-selected-note="releaseSelectedNote"
         />
-
-        <VolumeMeter :label="t.volume" :status="status" :bar-style="volumeStyle" />
 
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
