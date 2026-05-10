@@ -1,7 +1,15 @@
-import { pianoSampleBaseUrl, pianoSampleUrls } from '~/utils/pianoSamples'
+import {
+  getPianoSampleBaseUrl,
+  getPianoSamplePreset,
+  getPianoSampleUrls,
+  pianoSamplePresets,
+  type PianoSamplePresetId
+} from '~/utils/pianoSamples'
 
 export function useKeyboardAudio() {
   const pressedMidi = ref<number | null>(null)
+  const selectedPianoPresetId = ref<PianoSamplePresetId>('velocity1')
+  const isPianoSamplerLoading = ref(false)
 
   let toneModule: typeof import('tone') | null = null
   let pianoSampler: any = null
@@ -11,8 +19,17 @@ export function useKeyboardAudio() {
 
   function applyInstrumentVolume() {
     if (pianoSampler) {
-      pianoSampler.volume.value = 18
+      pianoSampler.volume.value = getPianoSamplePreset(selectedPianoPresetId.value).gainDb
     }
+  }
+
+  function disposePianoSampler() {
+    pianoSampler?.dispose()
+    pianoLimiter?.dispose()
+    pianoSampler = null
+    pianoLimiter = null
+    pianoSamplerLoadPromise = null
+    isPianoSamplerLoading.value = false
   }
 
   async function ensureTone() {
@@ -26,25 +43,36 @@ export function useKeyboardAudio() {
   }
 
   async function loadPianoSampler() {
-    const Tone = await ensureTone()
+    if (!pianoSamplerLoadPromise) {
+      isPianoSamplerLoading.value = true
+    }
+
+    let Tone: typeof import('tone')
+
+    try {
+      Tone = await ensureTone()
+    } catch (error) {
+      isPianoSamplerLoading.value = false
+      throw error
+    }
 
     if (!pianoSamplerLoadPromise) {
       pianoLimiter = new Tone.Limiter(-1).toDestination()
       pianoSampler = new Tone.Sampler({
-        urls: pianoSampleUrls,
-        baseUrl: pianoSampleBaseUrl,
+        urls: getPianoSampleUrls(selectedPianoPresetId.value),
+        baseUrl: getPianoSampleBaseUrl(selectedPianoPresetId.value),
         attack: 0.001,
         release: 0.9
       }).connect(pianoLimiter)
       applyInstrumentVolume()
       pianoSamplerLoadPromise = Tone.loaded()
-        .then(() => pianoSampler)
+        .then(() => {
+          isPianoSamplerLoading.value = false
+          return pianoSampler
+        })
         .catch((error) => {
-          pianoSampler?.dispose()
-          pianoLimiter?.dispose()
-          pianoSampler = null
-          pianoLimiter = null
-          pianoSamplerLoadPromise = null
+          isPianoSamplerLoading.value = false
+          disposePianoSampler()
           throw error
         })
     }
@@ -60,6 +88,26 @@ export function useKeyboardAudio() {
 
   async function getKeyboardInstrument() {
     return loadPianoSampler()
+  }
+
+  async function setPianoSamplePreset(presetId: PianoSamplePresetId) {
+    if (selectedPianoPresetId.value === presetId) {
+      return
+    }
+
+    await stopKeyboardNote()
+    selectedPianoPresetId.value = presetId
+    disposePianoSampler()
+    await loadPianoSampler()
+  }
+
+  function restorePianoSamplePreset(presetId: PianoSamplePresetId) {
+    if (selectedPianoPresetId.value === presetId) {
+      return
+    }
+
+    selectedPianoPresetId.value = presetId
+    disposePianoSampler()
   }
 
   async function startKeyboardNote(noteName: string, midi: number) {
@@ -89,14 +137,18 @@ export function useKeyboardAudio() {
   }
 
   function disposeKeyboardAudio() {
-    pianoSampler?.dispose()
-    pianoLimiter?.dispose()
+    disposePianoSampler()
   }
 
   return {
     pressedMidi,
+    pianoSamplePresets,
+    selectedPianoPresetId,
+    isPianoSamplerLoading,
     startKeyboardNote,
     stopKeyboardNote,
+    setPianoSamplePreset,
+    restorePianoSamplePreset,
     preloadPianoSampler,
     disposeKeyboardAudio
   }

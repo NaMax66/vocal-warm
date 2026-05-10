@@ -3,6 +3,7 @@ import { copy, supportedLanguages, type Language } from '~/utils/i18n'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import { keyboardMaxMidi, keyboardMinMidi, midiToNoteName } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
+import { isPianoSamplePresetId, type PianoSamplePresetId } from '~/utils/pianoSamples'
 
 const language = ref<Language>('en')
 const selectedMidi = ref(60)
@@ -25,8 +26,13 @@ const {
 
 const {
   pressedMidi,
+  pianoSamplePresets,
+  selectedPianoPresetId,
+  isPianoSamplerLoading,
   startKeyboardNote,
   stopKeyboardNote,
+  setPianoSamplePreset,
+  restorePianoSamplePreset,
   preloadPianoSampler,
   disposeKeyboardAudio
 } = useKeyboardAudio()
@@ -64,6 +70,11 @@ function setLanguage(nextLanguage: Language) {
   localStorage.setItem('vocalwarm-language', nextLanguage)
 }
 
+async function selectPianoSamplePreset(presetId: PianoSamplePresetId) {
+  localStorage.setItem('vocalwarm-piano-preset', presetId)
+  await setPianoSamplePreset(presetId)
+}
+
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false
@@ -77,6 +88,7 @@ async function stepSelectedMidi(direction: number) {
     keyboardMinMidi,
     Math.min(keyboardMaxMidi, selectedMidi.value + direction)
   )
+  localStorage.setItem('vocalwarm-selected-midi', String(selectedMidi.value))
 
   if (isSliderHolding.value) {
     await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
@@ -141,6 +153,20 @@ onMounted(() => {
     ? savedLanguage
     : resolveLanguage(navigator.language)
 
+  const savedPianoPresetId = localStorage.getItem('vocalwarm-piano-preset')
+  if (isPianoSamplePresetId(savedPianoPresetId)) {
+    restorePianoSamplePreset(savedPianoPresetId)
+  }
+
+  const savedSelectedMidi = Number(localStorage.getItem('vocalwarm-selected-midi'))
+  if (
+    Number.isInteger(savedSelectedMidi)
+    && savedSelectedMidi >= keyboardMinMidi
+    && savedSelectedMidi <= keyboardMaxMidi
+  ) {
+    selectedMidi.value = savedSelectedMidi
+  }
+
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('keyup', handleGlobalKeyup)
 })
@@ -170,8 +196,16 @@ onBeforeUnmount(() => {
           :languages="supportedLanguages"
           :stop-label="t.stop"
           :is-listening="isListening"
+          :sound-settings-label="t.soundSettings"
+          :sound-presets="pianoSamplePresets"
+          :sound-preset-labels="t.soundPresets"
+          :sound-description="t.soundDescription"
+          :sound-loading-label="t.soundLoading"
+          :selected-piano-preset-id="selectedPianoPresetId"
+          :is-piano-sampler-loading="isPianoSamplerLoading"
           @set-language="setLanguage"
           @stop="stopListening"
+          @set-piano-sample-preset="selectPianoSamplePreset"
         />
 
         <VolumeMeter :label="t.volume" :status="status" :active-steps="volumeSteps" />
