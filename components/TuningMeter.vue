@@ -50,7 +50,6 @@ defineProps<{
 .needle {
   position: absolute;
   z-index: 1;
-  left: 50%;
   top: 8px;
   width: 3px;
   height: 32px;
@@ -58,12 +57,15 @@ defineProps<{
 }
 
 .center-line {
+  left: 50%;
   background: rgba(23, 32, 29, 0.28);
 }
 
 .needle {
+  left: calc(50% + var(--needle-offset, 0%));
+  transform: translateX(-50%);
   background: #17201d;
-  transition: transform 90ms linear;
+  transition: left 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @media (max-width: 560px) {

@@ -2,7 +2,8 @@
 import { keyboardMaxMidi, keyboardMinMidi, noteNames } from '~/composables/useNoteMath'
 
 const props = defineProps<{
-  activeMidi: number | null
+  detectedMidi: number | null
+  pressedMidi: number | null
   label: string
 }>()
 
@@ -41,7 +42,9 @@ const pianoKeys = computed(() => {
       label: `${noteName}${Math.floor(midi / 12) - 1}`,
       isBlack,
       afterWhiteCount,
-      isActive: props.activeMidi === midi
+      isDetected: props.detectedMidi === midi,
+      isPressed: props.pressedMidi === midi,
+      isCombined: props.detectedMidi === midi && props.pressedMidi === midi
     }
   })
 })
@@ -72,9 +75,9 @@ onMounted(async () => {
           :key="key.midi"
           type="button"
           class="piano-key white"
-          :class="{ active: key.isActive }"
+          :class="{ detected: key.isDetected, pressed: key.isPressed, combined: key.isCombined }"
           :aria-label="key.label"
-          :aria-current="key.isActive ? 'true' : undefined"
+          :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.label, key.midi)"
           @pointerup="endNote(key.label, key.midi)"
           @pointercancel="endNote(key.label, key.midi)"
@@ -92,10 +95,10 @@ onMounted(async () => {
           :key="key.midi"
           type="button"
           class="piano-key black"
-          :class="{ active: key.isActive }"
+          :class="{ detected: key.isDetected, pressed: key.isPressed, combined: key.isCombined }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
           :aria-label="key.label"
-          :aria-current="key.isActive ? 'true' : undefined"
+          :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.label, key.midi)"
           @pointerup="endNote(key.label, key.midi)"
           @pointercancel="endNote(key.label, key.midi)"
@@ -192,12 +195,30 @@ onMounted(async () => {
   box-shadow: 0 7px 14px rgba(23, 32, 29, 0.24);
 }
 
-.piano-key.active {
+.piano-key.detected {
+  color: #fffaf0;
+  background: #277a73;
+  box-shadow:
+    0 0 0 3px rgba(39, 122, 115, 0.22),
+    0 10px 28px rgba(39, 122, 115, 0.3);
+  transform: translateY(-2px);
+}
+
+.piano-key.pressed {
   color: #fffaf0;
   background: #d74f2a;
   box-shadow:
     0 0 0 3px rgba(215, 79, 42, 0.22),
     0 10px 28px rgba(215, 79, 42, 0.32);
+  transform: translateY(-2px);
+}
+
+.piano-key.combined {
+  color: #fffaf0;
+  background: #8b6fc8;
+  box-shadow:
+    0 0 0 3px rgba(139, 111, 200, 0.24),
+    0 10px 30px rgba(139, 111, 200, 0.34);
   transform: translateY(-2px);
 }
 

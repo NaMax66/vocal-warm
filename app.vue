@@ -35,7 +35,6 @@ const t = computed(() => copy[language.value])
 const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const status = computed(() => t.value.status[statusKey.value])
-const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 
 const centsLabel = computed(() => {
@@ -51,7 +50,7 @@ const centsLabel = computed(() => {
 })
 
 const meterStyle = computed(() => ({
-  transform: `translateX(${Math.max(-48, Math.min(48, cents.value * 0.9))}px)`
+  '--needle-offset': `${Math.max(-33.33, Math.min(33.33, (cents.value / 50) * 33.33))}%`
 }))
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
@@ -187,7 +186,8 @@ onBeforeUnmount(() => {
         <TuningMeter :label="t.meterLabel" :needle-style="meterStyle" />
 
         <PianoKeyboard
-          :active-midi="displayActiveMidi"
+          :detected-midi="activeMidi"
+          :pressed-midi="pressedMidi"
           :label="t.keyboardLabel"
           @note-start="startKeyboardNote"
           @note-end="stopKeyboardNote"
