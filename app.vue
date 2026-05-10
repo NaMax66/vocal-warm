@@ -7,6 +7,7 @@ import { usePitchDetector } from '~/composables/usePitchDetector'
 const language = ref<Language>('en')
 const selectedMidi = ref(60)
 const isSliderHolding = ref(false)
+const runtimeConfig = useRuntimeConfig()
 
 const {
   isListening,
@@ -31,6 +32,8 @@ const {
 } = useKeyboardAudio()
 
 const t = computed(() => copy[language.value])
+const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
+const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const status = computed(() => t.value.status[statusKey.value])
 const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
@@ -164,6 +167,11 @@ onBeforeUnmount(() => {
         @start="startListening"
       />
     </section>
+
+    <footer class="app-footer">
+      <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
+      <span>{{ appVersion }}</span>
+    </footer>
   </main>
 </template>
 
@@ -189,6 +197,7 @@ button {
 }
 
 .page-shell {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -212,6 +221,29 @@ button {
   box-shadow: 0 24px 80px rgba(31, 41, 37, 0.18);
   backdrop-filter: blur(18px);
   overflow: hidden;
+}
+
+.app-footer {
+  position: fixed;
+  right: 8px;
+  bottom: 6px;
+  z-index: 40;
+  display: flex;
+  gap: 6px;
+  color: rgba(82, 97, 92, 0.48);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  color: rgba(23, 32, 29, 0.72);
+  text-decoration: underline;
 }
 
 .tuner.inactive .piano-key.black {

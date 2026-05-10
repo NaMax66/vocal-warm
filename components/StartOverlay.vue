@@ -74,6 +74,7 @@ defineEmits<{
 }
 
 .overlay-action {
+  text-transform: uppercase;
   position: relative;
   z-index: 1;
   min-width: min(74vw, 320px);

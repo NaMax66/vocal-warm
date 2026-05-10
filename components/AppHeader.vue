@@ -18,7 +18,9 @@ defineEmits<{
 <template>
   <div class="topbar">
     <div>
-      <p class="eyebrow">VocalWarm</p>
+      <p class="eyebrow">
+        <span>VocalWarm</span>
+      </p>
       <h1>{{ title }}</h1>
     </div>
 
@@ -57,9 +59,15 @@ defineEmits<{
   display: flex;
   align-items: center;
   gap: 0;
+  width: max-content;
+  max-width: 50vw;
 }
 
 .eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 8px;
   color: #5d6964;
   font-size: 0.78rem;
@@ -78,6 +86,9 @@ h1 {
 
 .language-switch {
   display: inline-grid;
+  flex: 1 1 96px;
+  width: 96px;
+  max-width: 100%;
   min-height: 42px;
   padding: 4px;
   border: 0;
@@ -91,7 +102,7 @@ h1 {
 }
 
 .language-switch {
-  grid-template-columns: repeat(2, 44px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-height: 48px;
 }
 
@@ -112,7 +123,8 @@ h1 {
 }
 
 .listen-button {
-  min-width: 104px;
+  flex: 1 1 104px;
+  min-width: 0;
   min-height: 48px;
   border: 0;
   border-radius: 0;
@@ -135,18 +147,24 @@ h1 {
     min-height: 220px;
   }
 
+  h1 {
+    margin-top: 36px;
+    text-align: center;
+  }
+
   .controls {
     top: calc(var(--tuner-padding) * -1);
     right: calc(var(--tuner-padding) * -1);
     bottom: auto;
-    width: 100%;
+    width: max-content;
+    max-width: 50vw;
     align-items: stretch;
     flex-direction: row;
     justify-content: flex-end;
   }
 
   .language-switch {
-    width: min(180px, 58vw);
+    width: 50vw;
   }
 
   .language-switch {
