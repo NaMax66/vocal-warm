@@ -49,6 +49,7 @@ const copy = {
     pianoSound: 'Piano',
     keyboardControl: 'Keyboard control',
     selectedNote: 'Selected note',
+    instrumentVolume: 'Instrument volume',
     holdHint: 'Use arrows to move. Hold Space to sustain.',
     status: {
       idle: 'Press start and allow microphone access',
@@ -77,6 +78,7 @@ const copy = {
     pianoSound: '\u041f\u0438\u0430\u043d\u0438\u043d\u043e',
     keyboardControl: '\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435',
     selectedNote: '\u0412\u044b\u0431\u0440\u0430\u043d\u043d\u0430\u044f \u043d\u043e\u0442\u0430',
+    instrumentVolume: '\u0413\u0440\u043e\u043c\u043a\u043e\u0441\u0442\u044c \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u0430',
     holdHint: '\u0421\u0442\u0440\u0435\u043b\u043a\u0438 \u0434\u0432\u0438\u0433\u0430\u044e\u0442. \u041f\u0440\u043e\u0431\u0435\u043b \u0443\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0437\u0432\u0443\u043a.',
     status: {
       idle: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0441\u0442\u0430\u0440\u0442 \u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u0435 \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u043c\u0438\u043a\u0440\u043e\u0444\u043e\u043d\u0443',
@@ -100,6 +102,7 @@ const pressedMidi = ref<number | null>(null)
 const selectedMidi = ref(60)
 const soundMode = ref<SoundMode>('piano')
 const isSliderHolding = ref(false)
+const instrumentVolume = ref(100)
 const cents = ref(0)
 const volume = ref(0)
 const errorMessage = ref('')
@@ -120,6 +123,7 @@ const t = computed(() => copy[language.value])
 const status = computed(() => t.value.status[statusKey.value])
 const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
+const instrumentVolumeDb = computed(() => Math.round(-28 + (instrumentVolume.value / 100) * 40))
 
 const centsLabel = computed(() => {
   if (!frequency.value) {
@@ -156,6 +160,16 @@ function midiToNoteName(midi: number) {
   return `${noteName}${Math.floor(midi / 12) - 1}`
 }
 
+function applyInstrumentVolume() {
+  if (midiSynth) {
+    midiSynth.volume.value = instrumentVolumeDb.value
+  }
+
+  if (pianoSampler) {
+    pianoSampler.volume.value = instrumentVolumeDb.value
+  }
+}
+
 async function ensureTone() {
   if (!toneModule) {
     toneModule = await import('tone')
@@ -185,7 +199,7 @@ async function getKeyboardInstrument() {
         release: 0.35
       }
     }).toDestination()
-    midiSynth.volume.value = 2
+    applyInstrumentVolume()
   }
 
   return midiSynth
@@ -201,7 +215,7 @@ async function loadPianoSampler() {
       attack: 0.001,
       release: 0.9
     }).toDestination()
-    pianoSampler.volume.value = 4
+    applyInstrumentVolume()
     pianoSamplerLoadPromise = Tone.loaded()
       .then(() => pianoSampler)
       .catch((error) => {
@@ -263,6 +277,11 @@ async function handleSelectedMidiInput(event: Event) {
   if (isSliderHolding.value) {
     await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
   }
+}
+
+function handleInstrumentVolumeInput(event: Event) {
+  instrumentVolume.value = Number((event.target as HTMLInputElement).value)
+  applyInstrumentVolume()
 }
 
 async function holdSelectedNote() {
@@ -528,6 +547,20 @@ onBeforeUnmount(() => {
       />
 
       <div class="note-slider">
+        <div class="slider-label">
+          <span>{{ t.instrumentVolume }}</span>
+          <strong>{{ instrumentVolume }}%</strong>
+        </div>
+        <input
+          v-model.number="instrumentVolume"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          :aria-label="t.instrumentVolume"
+          @input="handleInstrumentVolumeInput"
+        >
+
         <div class="slider-label">
           <span>{{ t.keyboardControl }}</span>
           <strong>{{ t.selectedNote }}: {{ selectedNoteLabel }}</strong>
