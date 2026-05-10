@@ -8,12 +8,13 @@ Russian documentation: [README.ru.md](README.ru.md)
 
 - Project folder: `\Documents\Codex\VocalWarm`
 - App type: Nuxt 3 single-page app.
-- Main screen and pitch logic live in `app.vue`.
-- The C2-B6 piano keyboard lives in `components/PianoKeyboard.vue`.
+- `app.vue` wires the page together and keeps only screen-level state.
+- Main UI blocks live in `components/`: `AppHeader.vue`, `StartOverlay.vue`, `PitchReadout.vue`, `TuningMeter.vue`, `PianoKeyboard.vue`, `KeyboardControls.vue`, and `VolumeMeter.vue`.
 - Shared translations live in `utils/i18n.ts`.
 - Piano sample CDN settings live in `utils/pianoSamples.ts`.
 - Shared note math and keyboard range constants live in `composables/useNoteMath.ts`.
 - Keyboard audio, Tone.js instruments, sampler preload, sound mode, and instrument volume live in `composables/useKeyboardAudio.ts`.
+- Microphone capture, autocorrelation pitch detection, detected note state, volume, and tuner status live in `composables/usePitchDetector.ts`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.

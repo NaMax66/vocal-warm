@@ -2,16 +2,19 @@
 
 VocalWarm - простое Nuxt-приложение для вокальной распевки. Оно слушает микрофон, определяет высоту звука и показывает ближайшую ноту.
 
+Основная документация на английском: [README.md](README.md)
+
 ## Заметки о проекте
 
 - Папка проекта: `Documents\Codex\VocalWarm`
 - Тип приложения: Nuxt 3 single-page app.
-- Основной экран и логика pitch detection находятся в `app.vue`.
-- Клавиатура C2-B6 находится в `components/PianoKeyboard.vue`.
+- `app.vue` собирает экран и хранит только состояние верхнего уровня.
+- Основные UI-блоки лежат в `components/`: `AppHeader.vue`, `StartOverlay.vue`, `PitchReadout.vue`, `TuningMeter.vue`, `PianoKeyboard.vue`, `KeyboardControls.vue` и `VolumeMeter.vue`.
 - Общие переводы находятся в `utils/i18n.ts`.
 - Настройки CDN для piano samples находятся в `utils/pianoSamples.ts`.
 - Общая математика нот и константы диапазона клавиатуры находятся в `composables/useNoteMath.ts`.
 - Аудио клавиатуры, Tone.js instruments, preload sampler, режим звука и громкость инструмента находятся в `composables/useKeyboardAudio.ts`.
+- Захват микрофона, autocorrelation pitch detection, состояние распознанной ноты, громкость и статус тюнера находятся в `composables/usePitchDetector.ts`.
 - Текущий заголовок на экране: `Распевка по нотам`.
 - Язык интерфейса выбирается из языка браузера при первом открытии: русский для `ru-*`, английский для остальных языков.
 - Пользователь может вручную переключить интерфейс кнопками `RU` / `EN`; выбор сохраняется в `localStorage` как `vocalwarm-language`.

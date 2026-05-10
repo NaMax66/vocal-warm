@@ -1,0 +1,186 @@
+import { frequencyToMidi, isMidiInKeyboardRange, midiToFrequency, noteNames } from '~/composables/useNoteMath'
+import type { StatusKey } from '~/utils/i18n'
+
+export function usePitchDetector() {
+  const isListening = ref(false)
+  const statusKey = ref<StatusKey>('idle')
+  const frequency = ref<number | null>(null)
+  const note = ref('--')
+  const octave = ref('')
+  const activeMidi = ref<number | null>(null)
+  const cents = ref(0)
+  const volume = ref(0)
+  const errorMessage = ref('')
+
+  let audioContext: AudioContext | null = null
+  let analyser: AnalyserNode | null = null
+  let source: MediaStreamAudioSourceNode | null = null
+  let stream: MediaStream | null = null
+  let animationId = 0
+  let sampleBuffer: Float32Array | null = null
+
+  function autoCorrelate(buffer: Float32Array, sampleRate: number) {
+    let rms = 0
+
+    for (let i = 0; i < buffer.length; i += 1) {
+      rms += buffer[i] * buffer[i]
+    }
+
+    rms = Math.sqrt(rms / buffer.length)
+    volume.value = rms
+
+    if (rms < 0.012) {
+      return null
+    }
+
+    let start = 0
+    let end = buffer.length - 1
+    const threshold = 0.2
+
+    for (let i = 0; i < buffer.length / 2; i += 1) {
+      if (Math.abs(buffer[i]) < threshold) {
+        start = i
+        break
+      }
+    }
+
+    for (let i = 1; i < buffer.length / 2; i += 1) {
+      if (Math.abs(buffer[buffer.length - i]) < threshold) {
+        end = buffer.length - i
+        break
+      }
+    }
+
+    const trimmed = buffer.slice(start, end)
+    const correlations = new Array(trimmed.length).fill(0)
+
+    for (let offset = 0; offset < trimmed.length; offset += 1) {
+      for (let i = 0; i < trimmed.length - offset; i += 1) {
+        correlations[offset] += trimmed[i] * trimmed[i + offset]
+      }
+    }
+
+    let offset = 0
+
+    while (correlations[offset] > correlations[offset + 1]) {
+      offset += 1
+    }
+
+    let bestOffset = -1
+    let bestCorrelation = 0
+
+    for (let i = offset; i < correlations.length - 1; i += 1) {
+      if (correlations[i] > bestCorrelation) {
+        bestCorrelation = correlations[i]
+        bestOffset = i
+      }
+    }
+
+    if (bestOffset <= 0 || bestOffset >= correlations.length - 1 || bestCorrelation < 0.01) {
+      return null
+    }
+
+    const before = correlations[bestOffset - 1]
+    const current = correlations[bestOffset]
+    const after = correlations[bestOffset + 1]
+    const correction = (after - before) / (2 * (2 * current - after - before))
+
+    return sampleRate / (bestOffset + correction)
+  }
+
+  function updateNoteFromFrequency(nextFrequency: number | null) {
+    if (!nextFrequency || !Number.isFinite(nextFrequency) || nextFrequency < 40 || nextFrequency > 2000) {
+      frequency.value = null
+      note.value = '--'
+      octave.value = ''
+      activeMidi.value = null
+      cents.value = 0
+      statusKey.value = isListening.value ? 'waiting' : statusKey.value
+      return
+    }
+
+    const midi = frequencyToMidi(nextFrequency)
+    const exactFrequency = midiToFrequency(midi)
+    const noteIndex = ((midi % 12) + 12) % 12
+
+    frequency.value = nextFrequency
+    note.value = noteNames[noteIndex]
+    octave.value = String(Math.floor(midi / 12) - 1)
+    activeMidi.value = isMidiInKeyboardRange(midi) ? midi : null
+    cents.value = Math.round(1200 * Math.log2(nextFrequency / exactFrequency))
+    statusKey.value = 'listening'
+  }
+
+  function tick() {
+    if (!analyser || !sampleBuffer || !audioContext) {
+      return
+    }
+
+    analyser.getFloatTimeDomainData(sampleBuffer)
+    updateNoteFromFrequency(autoCorrelate(sampleBuffer, audioContext.sampleRate))
+    animationId = requestAnimationFrame(tick)
+  }
+
+  async function startListening(micErrorMessage: string, onStarted?: () => void) {
+    errorMessage.value = ''
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      })
+
+      audioContext = new AudioContext()
+      analyser = audioContext.createAnalyser()
+      analyser.fftSize = 4096
+      sampleBuffer = new Float32Array(analyser.fftSize)
+      source = audioContext.createMediaStreamSource(stream)
+      source.connect(analyser)
+      isListening.value = true
+      statusKey.value = 'listening'
+      onStarted?.()
+      tick()
+    } catch (error) {
+      errorMessage.value = error instanceof Error ? error.message : micErrorMessage
+      statusKey.value = 'micUnavailable'
+    }
+  }
+
+  function stopListening() {
+    cancelAnimationFrame(animationId)
+    source?.disconnect()
+    stream?.getTracks().forEach((track) => track.stop())
+    audioContext?.close()
+
+    audioContext = null
+    analyser = null
+    source = null
+    stream = null
+    sampleBuffer = null
+    isListening.value = false
+    frequency.value = null
+    volume.value = 0
+    note.value = '--'
+    octave.value = ''
+    activeMidi.value = null
+    cents.value = 0
+    statusKey.value = 'stopped'
+  }
+
+  return {
+    isListening,
+    statusKey,
+    frequency,
+    note,
+    octave,
+    activeMidi,
+    cents,
+    volume,
+    errorMessage,
+    startListening,
+    stopListening
+  }
+}
