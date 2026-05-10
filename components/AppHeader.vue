@@ -52,11 +52,11 @@ defineEmits<{
 
 .controls {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: calc(var(--tuner-padding) * -1);
+  right: calc(var(--tuner-padding) * -1);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
 }
 
 .eyebrow {
@@ -80,9 +80,14 @@ h1 {
   display: inline-grid;
   min-height: 42px;
   padding: 4px;
-  border: 1px solid rgba(23, 32, 29, 0.14);
-  border-radius: 8px;
-  background: rgba(23, 32, 29, 0.07);
+  border: 0;
+  border-left: 1px solid rgba(23, 32, 29, 0.12);
+  border-bottom: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 0 8px 0 8px;
+  background: rgba(23, 32, 29, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 8px 20px rgba(31, 41, 37, 0.08);
 }
 
 .language-switch {
@@ -110,7 +115,7 @@ h1 {
   min-width: 104px;
   min-height: 48px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   color: #fffaf0;
   background: #d74f2a;
   cursor: pointer;
@@ -131,17 +136,17 @@ h1 {
   }
 
   .controls {
-    top: auto;
-    right: auto;
-    bottom: 0;
+    top: calc(var(--tuner-padding) * -1);
+    right: calc(var(--tuner-padding) * -1);
+    bottom: auto;
     width: 100%;
     align-items: stretch;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: flex-end;
   }
 
-  .listen-button,
   .language-switch {
-    width: 100%;
+    width: min(180px, 58vw);
   }
 
   .language-switch {

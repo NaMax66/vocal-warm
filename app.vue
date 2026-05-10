@@ -199,11 +199,13 @@ button {
 }
 
 .tuner {
+  --tuner-padding: clamp(22px, 5vw, 42px);
+
   position: relative;
   width: 100%;
   max-width: 960px;
   min-width: 0;
-  padding: clamp(22px, 5vw, 42px);
+  padding: var(--tuner-padding);
   border: 1px solid rgba(23, 32, 29, 0.14);
   border-radius: 8px;
   background: rgba(255, 252, 244, 0.92);
@@ -244,7 +246,16 @@ button {
 
 @media (max-width: 560px) {
   .page-shell {
-    padding: 14px;
+    padding: 0;
+  }
+
+  .tuner {
+    --tuner-padding: 0px;
+
+    min-height: 100vh;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
   }
 }
 </style>

@@ -101,10 +101,9 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  margin: 4px -8px 24px;
+  margin: 4px 0 24px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 8px;
   scrollbar-color: rgba(23, 32, 29, 0.28) transparent;
   scrollbar-width: thin;
 }
@@ -117,7 +116,6 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
   width: max-content;
   min-width: 100%;
   height: 132px;
-  padding: 0 2px;
 }
 
 .white-keys {
@@ -129,7 +127,7 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
 
 .black-keys {
   position: absolute;
-  inset: 0 auto auto 2px;
+  inset: 0 auto auto 0;
   height: 82px;
 }
 
@@ -205,10 +203,7 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
 
 @media (max-width: 560px) {
   .keyboard-wrap {
-    margin-right: -14px;
-    margin-left: -14px;
-    padding-right: 14px;
-    padding-left: 14px;
+    margin: 0 0 24px;
   }
 
   .keyboard {
