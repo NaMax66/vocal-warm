@@ -23,7 +23,7 @@ defineEmits<{
 <style scoped>
 .start-overlay {
   position: absolute;
-  z-index: 20;
+  z-index: 60;
   inset: 0;
   display: flex;
   flex-direction: column;
@@ -55,8 +55,8 @@ defineEmits<{
 .overlay-action:focus-visible {
   transform: translateY(-2px);
   color: #fffaf0;
-  background: #d74f2a;
-  border-color: #d74f2a;
+  background: #b83e20;
+  border-color: #b83e20;
   outline: 0;
 }
 
@@ -65,6 +65,10 @@ defineEmits<{
   position: relative;
   z-index: 1;
   color: #52615c;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 252, 244, 0.72);
+  box-shadow: 0 8px 24px rgba(31, 41, 37, 0.08);
   font-weight: 800;
 }
 
@@ -74,18 +78,19 @@ defineEmits<{
 }
 
 .overlay-action {
+  text-transform: uppercase;
   position: relative;
   z-index: 1;
   min-width: min(74vw, 320px);
   padding: 22px 42px;
-  border: 1px solid rgba(215, 79, 42, 0.52);
+  border: 1px solid #d74f2a;
   border-radius: 8px;
-  color: #d74f2a;
-  background: rgba(255, 252, 244, 0.62);
+  color: #fffaf0;
+  background: #d74f2a;
   cursor: pointer;
   box-shadow:
-    0 18px 60px rgba(31, 41, 37, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+    0 18px 60px rgba(215, 79, 42, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(8px) saturate(1.1);
   font-size: clamp(2.2rem, 8vw, 5.8rem);
   font-weight: 900;

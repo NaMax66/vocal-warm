@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { copy, supportedLanguages, type Language } from '~/utils/i18n'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
-import { midiToNoteName } from '~/composables/useNoteMath'
+import { keyboardMaxMidi, keyboardMinMidi, midiToNoteName } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
 
 const language = ref<Language>('en')
 const selectedMidi = ref(60)
 const isSliderHolding = ref(false)
+const runtimeConfig = useRuntimeConfig()
 
 const {
   isListening,
@@ -31,6 +32,8 @@ const {
 } = useKeyboardAudio()
 
 const t = computed(() => copy[language.value])
+const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
+const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const status = computed(() => t.value.status[statusKey.value])
 const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
@@ -64,8 +67,19 @@ function setLanguage(nextLanguage: Language) {
   localStorage.setItem('vocalwarm-language', nextLanguage)
 }
 
-async function handleSelectedMidiInput(event: Event) {
-  selectedMidi.value = Number((event.target as HTMLInputElement).value)
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
+}
+
+async function stepSelectedMidi(direction: number) {
+  selectedMidi.value = Math.max(
+    keyboardMinMidi,
+    Math.min(keyboardMaxMidi, selectedMidi.value + direction)
+  )
 
   if (isSliderHolding.value) {
     await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
@@ -90,11 +104,48 @@ async function startListening() {
   await startPitchListening(t.value.micError, preloadPianoSampler)
 }
 
+function handleGlobalKeydown(event: KeyboardEvent) {
+  if (!isListening.value || isEditableTarget(event.target)) {
+    return
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    stepSelectedMidi(-1)
+    return
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    stepSelectedMidi(1)
+    return
+  }
+
+  if (event.code === 'Space' && !event.repeat) {
+    event.preventDefault()
+    holdSelectedNote()
+  }
+}
+
+function handleGlobalKeyup(event: KeyboardEvent) {
+  if (!isListening.value || isEditableTarget(event.target)) {
+    return
+  }
+
+  if (event.code === 'Space') {
+    event.preventDefault()
+    releaseSelectedNote()
+  }
+}
+
 onMounted(() => {
   const savedLanguage = localStorage.getItem('vocalwarm-language') as Language | null
   language.value = savedLanguage && supportedLanguages.includes(savedLanguage)
     ? savedLanguage
     : resolveLanguage(navigator.language)
+
+  window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('keyup', handleGlobalKeyup)
 })
 
 useHead(() => ({
@@ -105,6 +156,8 @@ useHead(() => ({
 }))
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('keyup', handleGlobalKeyup)
   disposeKeyboardAudio()
   stopListening()
 })
@@ -141,12 +194,11 @@ onBeforeUnmount(() => {
         />
 
         <KeyboardControls
-          :selected-midi="selectedMidi"
           :keyboard-label="t.keyboardControl"
           :selected-note-text="t.selectedNote"
           :selected-note-label="selectedNoteLabel"
           :hold-hint="t.holdHint"
-          @selected-midi-input="handleSelectedMidiInput"
+          @step-selected-midi="stepSelectedMidi"
           @hold-selected-note="holdSelectedNote"
           @release-selected-note="releaseSelectedNote"
         />
@@ -164,6 +216,11 @@ onBeforeUnmount(() => {
         @start="startListening"
       />
     </section>
+
+    <footer class="app-footer">
+      <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
+      <span>{{ appVersion }}</span>
+    </footer>
   </main>
 </template>
 
@@ -189,6 +246,7 @@ button {
 }
 
 .page-shell {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -214,6 +272,29 @@ button {
   overflow: hidden;
 }
 
+.app-footer {
+  position: fixed;
+  right: 8px;
+  bottom: 6px;
+  z-index: 40;
+  display: flex;
+  gap: 6px;
+  color: rgba(82, 97, 92, 0.48);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  color: rgba(23, 32, 29, 0.72);
+  text-decoration: underline;
+}
+
 .tuner.inactive .piano-key.black {
   color: rgba(255, 250, 240, 0.28);
   background: rgba(23, 32, 29, 0.56);
@@ -231,7 +312,7 @@ button {
 
 .tuner.inactive .topbar > :first-child {
   position: relative;
-  z-index: 30;
+  z-index: 70;
 }
 
 .tuner-content {
@@ -246,7 +327,7 @@ button {
 
 @media (max-width: 560px) {
   .page-shell {
-    padding: 0;
+    padding: 5px;
   }
 
   .tuner {
@@ -256,6 +337,14 @@ button {
     border-right: 0;
     border-left: 0;
     border-radius: 0;
+  }
+
+  .tuner-content {
+    padding-bottom: 92px;
+  }
+
+  .app-footer {
+    bottom: 10px;
   }
 }
 </style>

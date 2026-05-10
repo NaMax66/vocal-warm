@@ -20,6 +20,7 @@ function endNote(note: string, midi: number) {
 }
 
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
+const keyboardWrap = ref<HTMLElement | null>(null)
 
 const pianoKeys = computed(() => {
   let whiteCount = 0
@@ -47,10 +48,23 @@ const pianoKeys = computed(() => {
 
 const whiteKeys = computed(() => pianoKeys.value.filter((key) => !key.isBlack))
 const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
+
+function centerKeyboardScroll() {
+  if (!keyboardWrap.value) {
+    return
+  }
+
+  keyboardWrap.value.scrollLeft = (keyboardWrap.value.scrollWidth - keyboardWrap.value.clientWidth) / 2
+}
+
+onMounted(async () => {
+  await nextTick()
+  centerKeyboardScroll()
+})
 </script>
 
 <template>
-  <div class="keyboard-wrap" :aria-label="label">
+  <div ref="keyboardWrap" class="keyboard-wrap" :aria-label="label">
     <div class="keyboard">
       <div class="white-keys">
         <button
