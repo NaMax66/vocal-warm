@@ -16,9 +16,11 @@ export function useKeyboardAudio() {
   let pianoLimiter: any = null
   let pianoSamplerLoadPromise: Promise<any> | null = null
   let activeKeyboardNote: string | null = null
+  let activeKeyboardMidi: number | null = null
   let activeKeyboardNoteStartedAt = 0
   let releaseTimeoutId: ReturnType<typeof setTimeout> | null = null
   let releaseTimeoutNote: string | null = null
+  let pressedMidiTimeoutId: ReturnType<typeof setTimeout> | null = null
 
   function applyInstrumentVolume() {
     if (pianoSampler) {
@@ -36,8 +38,18 @@ export function useKeyboardAudio() {
     releaseTimeoutNote = null
   }
 
+  function clearPendingPressedMidi() {
+    if (!pressedMidiTimeoutId) {
+      return
+    }
+
+    clearTimeout(pressedMidiTimeoutId)
+    pressedMidiTimeoutId = null
+  }
+
   function disposePianoSampler() {
     clearPendingRelease()
+    clearPendingPressedMidi()
     pianoSampler?.dispose()
     pianoLimiter?.dispose()
     pianoSampler = null
@@ -130,8 +142,10 @@ export function useKeyboardAudio() {
     }
 
     await stopKeyboardNote()
+    clearPendingPressedMidi()
     pressedMidi.value = midi
     activeKeyboardNote = noteName
+    activeKeyboardMidi = midi
     activeKeyboardNoteStartedAt = performance.now()
 
     const pendingReleaseNote = releaseTimeoutNote
@@ -149,7 +163,11 @@ export function useKeyboardAudio() {
       return
     }
 
-    const releaseDelayMs = Math.max(0, 500 - (performance.now() - activeKeyboardNoteStartedAt))
+    const isActiveNote = activeKeyboardNote === noteName
+    const releasedMidi = isActiveNote ? activeKeyboardMidi : null
+    const releaseDelayMs = isActiveNote
+      ? Math.max(0, 500 - (performance.now() - activeKeyboardNoteStartedAt))
+      : 0
 
     if (releaseTimeoutId) {
       clearTimeout(releaseTimeoutId)
@@ -162,10 +180,18 @@ export function useKeyboardAudio() {
       releaseTimeoutNote = null
     }, releaseDelayMs)
 
-    if (activeKeyboardNote === noteName) {
+    if (isActiveNote) {
       activeKeyboardNote = null
+      activeKeyboardMidi = null
       activeKeyboardNoteStartedAt = 0
-      pressedMidi.value = null
+      clearPendingPressedMidi()
+      pressedMidiTimeoutId = setTimeout(() => {
+        if (pressedMidi.value === releasedMidi) {
+          pressedMidi.value = null
+        }
+
+        pressedMidiTimeoutId = null
+      }, releaseDelayMs)
     }
   }
 

@@ -23,6 +23,7 @@ function endNote(note: string, midi: number) {
 
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
 const keyboardWrap = ref<HTMLElement | null>(null)
+const keyboardScrollStorageKey = 'vocalwarm-keyboard-scroll-left'
 
 const pianoKeys = computed(() => {
   let whiteCount = 0
@@ -59,12 +60,28 @@ function centerKeyboardScroll() {
     return
   }
 
-  keyboardWrap.value.scrollLeft = (keyboardWrap.value.scrollWidth - keyboardWrap.value.clientWidth) / 2
+  const savedScrollLeft = Number(localStorage.getItem(keyboardScrollStorageKey))
+  keyboardWrap.value.scrollLeft = Number.isFinite(savedScrollLeft)
+    ? savedScrollLeft
+    : (keyboardWrap.value.scrollWidth - keyboardWrap.value.clientWidth) / 2
+}
+
+function saveKeyboardScroll() {
+  if (!keyboardWrap.value) {
+    return
+  }
+
+  localStorage.setItem(keyboardScrollStorageKey, String(Math.round(keyboardWrap.value.scrollLeft)))
 }
 
 onMounted(async () => {
   await nextTick()
   centerKeyboardScroll()
+  keyboardWrap.value?.addEventListener('scroll', saveKeyboardScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  keyboardWrap.value?.removeEventListener('scroll', saveKeyboardScroll)
 })
 </script>
 
@@ -144,20 +161,20 @@ onMounted(async () => {
   display: block;
   width: max-content;
   min-width: 100%;
-  height: 132px;
+  height: 145px;
 }
 
 .white-keys {
   display: flex;
   align-items: stretch;
   width: max-content;
-  height: 132px;
+  height: 145px;
 }
 
 .black-keys {
   position: absolute;
   inset: 0 auto auto 0;
-  height: 82px;
+  height: 90px;
 }
 
 .piano-key {
@@ -182,7 +199,7 @@ onMounted(async () => {
 .piano-key.white {
   z-index: 1;
   width: var(--white-key-width);
-  height: 132px;
+  height: 145px;
   border: 1px solid rgba(23, 32, 29, 0.18);
   border-left-width: 0;
   border-radius: 0 0 6px 6px;
@@ -200,7 +217,7 @@ onMounted(async () => {
   left: calc((var(--white-key-width) * var(--after-white-count)) - (var(--black-key-width) / 2));
   z-index: 2;
   width: var(--black-key-width);
-  height: 82px;
+  height: 90px;
   border-radius: 0 0 5px 5px;
   color: rgba(255, 250, 240, 0.72);
   background: #17201d;
@@ -235,7 +252,7 @@ onMounted(async () => {
 }
 
 .piano-key.selected::after {
-  content: "×";
+  content: "x";
   position: absolute;
   top: 8px;
   left: 50%;
@@ -284,24 +301,24 @@ onMounted(async () => {
   .keyboard {
     --white-key-width: 32px;
     --black-key-width: 21px;
-    height: 124px;
+    height: 136px;
     min-width: 1120px;
   }
 
   .white-keys {
-    height: 124px;
+    height: 136px;
   }
 
   .black-keys {
-    height: 76px;
+    height: 84px;
   }
 
   .piano-key.white {
-    height: 124px;
+    height: 136px;
   }
 
   .piano-key.black {
-    height: 76px;
+    height: 84px;
   }
 }
 </style>

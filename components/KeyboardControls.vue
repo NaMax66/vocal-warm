@@ -3,7 +3,6 @@ defineProps<{
   keyboardLabel: string
   selectedNoteText: string
   selectedNoteLabel: string
-  holdHint: string
 }>()
 
 defineEmits<{
@@ -50,8 +49,6 @@ defineEmits<{
         <span aria-hidden="true">&rarr;</span>
       </button>
     </div>
-
-    <p>{{ holdHint }}</p>
   </div>
 </template>
 
@@ -130,14 +127,6 @@ defineEmits<{
   font-size: 1.12rem;
 }
 
-.keyboard-control-pad p {
-  margin: 0;
-  color: #5d6964;
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-align: center;
-}
-
 @media (max-width: 560px) {
   .keyboard-control-pad {
     position: fixed;
@@ -160,10 +149,6 @@ defineEmits<{
 
   .control-key {
     min-height: 60px;
-  }
-
-  .keyboard-control-pad p {
-    font-size: 0.72rem;
   }
 }
 </style>

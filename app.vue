@@ -45,7 +45,7 @@ const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 
 const centsLabel = computed(() => {
   if (!frequency.value) {
-    return t.value.waitingForSound
+    return ''
   }
 
   if (Math.abs(cents.value) <= 5) {
@@ -232,7 +232,6 @@ onBeforeUnmount(() => {
           :keyboard-label="t.keyboardControl"
           :selected-note-text="t.selectedNote"
           :selected-note-label="selectedNoteLabel"
-          :hold-hint="t.holdHint"
           @step-selected-midi="stepSelectedMidi"
           @hold-selected-note="holdSelectedNote"
           @release-selected-note="releaseSelectedNote"

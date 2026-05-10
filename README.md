@@ -13,18 +13,27 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Shared translations live in `utils/i18n.ts`.
 - Piano sample CDN settings live in `utils/pianoSamples.ts`.
 - Shared note math and keyboard range constants live in `composables/useNoteMath.ts`.
-- Keyboard audio, Tone.js instruments, sampler preload, sound mode, and instrument volume live in `composables/useKeyboardAudio.ts`.
+- Keyboard audio, Tone.js sampler preload, sample preset selection, limiter, instrument volume, and note release timing live in `composables/useKeyboardAudio.ts`.
 - Microphone capture, autocorrelation pitch detection, detected note state, volume, and tuner status live in `composables/usePitchDetector.ts`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
 - The app uses the browser Web Audio API and `navigator.mediaDevices.getUserMedia`.
 - Keyboard note playback uses Tone.js (`tone`).
-- Sound modes: `MIDI` uses a Tone.js synth, `Piano` uses Salamander Grand Piano samples through `Tone.Sampler`.
-- Piano samples are loaded from the public `@audio-samples/piano-velocity1` package on jsDelivr.
+- Keyboard playback uses Salamander Grand Piano samples through `Tone.Sampler`.
+- Piano samples are loaded from public `@audio-samples/piano-velocity*` packages on jsDelivr.
+- The sound settings gear under the `Stop` button lets users choose the piano velocity layer: `Soft` (`velocity1`, +18 dB), `Light` (`velocity2`, +14 dB), `Full` (`velocity8`, +8 dB), `Strong` (`velocity12`, +4 dB), or `Bright` (`velocity16`, +2 dB).
+- The selected sample preset is stored in `localStorage` as `vocalwarm-piano-preset`.
+- Switching sample presets preloads the new sampler immediately and shows a small loading indicator while samples are loading.
+- Piano playback is routed through a `Tone.Limiter(-1)` to reduce clipping after sample gain boosts.
 - Salamander Grand Piano samples are by Alexander Holm and are licensed under CC BY 3.0.
-- The keyboard supports sustained notes while holding a key/pointer.
-- The note range slider selects C2-B6 with arrow keys; holding Space sustains the selected note.
+- The keyboard supports sustained notes while holding a key/pointer, and short taps keep notes active for at least about 0.5 seconds before release.
+- Pressed key highlighting fades out over about 0.5 seconds to match the short note hold.
+- The selected note is marked on the keyboard with a small red cross.
+- The note control selects C2-B6 with arrow keys; holding Space sustains the selected note.
+- The selected note for Space control is stored in `localStorage` as `vocalwarm-selected-midi`.
+- The keyboard horizontal scroll position is stored in `localStorage` as `vocalwarm-keyboard-scroll-left`.
+- The sound settings menu closes when clicking outside it.
 - Pitch detection is implemented with autocorrelation over an `AnalyserNode` time-domain buffer.
 - The analyser uses `fftSize = 4096`.
 - Microphone constraints intentionally disable `echoCancellation`, `noiseSuppression`, and `autoGainControl` for cleaner pitch tracking.
