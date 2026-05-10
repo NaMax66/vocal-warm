@@ -14,7 +14,12 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
 - The app uses the browser Web Audio API and `navigator.mediaDevices.getUserMedia`.
-- Keyboard note playback uses Tone.js (`tone`) with a simple browser synth.
+- Keyboard note playback uses Tone.js (`tone`).
+- Sound modes: `MIDI` uses a Tone.js synth, `Piano` uses Salamander Grand Piano samples through `Tone.Sampler`.
+- Piano samples are loaded from the public `@audio-samples/piano-velocity1` package on jsDelivr.
+- Salamander Grand Piano samples are by Alexander Holm and are licensed under CC BY 3.0.
+- The keyboard supports sustained notes while holding a key/pointer.
+- The note range slider selects C2-B6 with arrow keys; holding Space sustains the selected note.
 - Pitch detection is implemented with autocorrelation over an `AnalyserNode` time-domain buffer.
 - The analyser uses `fftSize = 4096`.
 - Microphone constraints intentionally disable `echoCancellation`, `noiseSuppression`, and `autoGainControl` for cleaner pitch tracking.

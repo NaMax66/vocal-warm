@@ -1,9 +1,35 @@
 <script setup lang="ts">
 type Language = 'en' | 'ru'
 type StatusKey = 'idle' | 'listening' | 'waiting' | 'stopped' | 'micUnavailable'
+type SoundMode = 'midi' | 'piano'
 
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const supportedLanguages: Language[] = ['en', 'ru']
+const soundModes: SoundMode[] = ['midi', 'piano']
+const pianoSampleBaseUrl = 'https://cdn.jsdelivr.net/npm/@audio-samples/piano-velocity1@1.0.5/audio/'
+const pianoSampleUrls = {
+  C2: 'C2v1.ogg',
+  'D#2': 'D%232v1.ogg',
+  'F#2': 'F%232v1.ogg',
+  A2: 'A2v1.ogg',
+  C3: 'C3v1.ogg',
+  'D#3': 'D%233v1.ogg',
+  'F#3': 'F%233v1.ogg',
+  A3: 'A3v1.ogg',
+  C4: 'C4v1.ogg',
+  'D#4': 'D%234v1.ogg',
+  'F#4': 'F%234v1.ogg',
+  A4: 'A4v1.ogg',
+  C5: 'C5v1.ogg',
+  'D#5': 'D%235v1.ogg',
+  'F#5': 'F%235v1.ogg',
+  A5: 'A5v1.ogg',
+  C6: 'C6v1.ogg',
+  'D#6': 'D%236v1.ogg',
+  'F#6': 'F%236v1.ogg',
+  A6: 'A6v1.ogg',
+  C7: 'C7v1.ogg'
+}
 const copy = {
   en: {
     title: 'Vocal warmup by notes',
@@ -18,6 +44,12 @@ const copy = {
     flat: (value: number) => `${value} c. flat`,
     meterLabel: 'Offset from the nearest note',
     keyboardLabel: 'Piano keyboard from C2 to B6',
+    sound: 'Sound',
+    midiSound: 'MIDI',
+    pianoSound: 'Piano',
+    keyboardControl: 'Keyboard control',
+    selectedNote: 'Selected note',
+    holdHint: 'Use arrows to move. Hold Space to sustain.',
     status: {
       idle: 'Press start and allow microphone access',
       listening: 'Listening',
@@ -40,6 +72,12 @@ const copy = {
     flat: (value: number) => `\u043d\u0438\u0436\u0435 \u043d\u0430 ${value} \u0446.`,
     meterLabel: '\u041e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u0438\u0435 \u043e\u0442 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0439 \u043d\u043e\u0442\u044b',
     keyboardLabel: '\u0424\u043e\u0440\u0442\u0435\u043f\u0438\u0430\u043d\u043d\u0430\u044f \u043a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u0430 \u043e\u0442 C2 \u0434\u043e B6',
+    sound: '\u0417\u0432\u0443\u043a',
+    midiSound: 'MIDI',
+    pianoSound: '\u041f\u0438\u0430\u043d\u0438\u043d\u043e',
+    keyboardControl: '\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435',
+    selectedNote: '\u0412\u044b\u0431\u0440\u0430\u043d\u043d\u0430\u044f \u043d\u043e\u0442\u0430',
+    holdHint: '\u0421\u0442\u0440\u0435\u043b\u043a\u0438 \u0434\u0432\u0438\u0433\u0430\u044e\u0442. \u041f\u0440\u043e\u0431\u0435\u043b \u0443\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0437\u0432\u0443\u043a.',
     status: {
       idle: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0441\u0442\u0430\u0440\u0442 \u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u0435 \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u043c\u0438\u043a\u0440\u043e\u0444\u043e\u043d\u0443',
       listening: '\u0421\u043b\u0443\u0448\u0430\u044e',
@@ -59,6 +97,9 @@ const note = ref('--')
 const octave = ref('')
 const activeMidi = ref<number | null>(null)
 const pressedMidi = ref<number | null>(null)
+const selectedMidi = ref(60)
+const soundMode = ref<SoundMode>('piano')
+const isSliderHolding = ref(false)
 const cents = ref(0)
 const volume = ref(0)
 const errorMessage = ref('')
@@ -70,12 +111,15 @@ let stream: MediaStream | null = null
 let animationId = 0
 let sampleBuffer: Float32Array | null = null
 let toneModule: typeof import('tone') | null = null
-let keyboardSynth: import('tone').Synth | null = null
-let pressedMidiTimeout = 0
+let midiSynth: any = null
+let pianoSampler: any = null
+let pianoSamplerLoadPromise: Promise<any> | null = null
+let activeKeyboardNote: string | null = null
 
 const t = computed(() => copy[language.value])
 const status = computed(() => t.value.status[statusKey.value])
 const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
+const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 
 const centsLabel = computed(() => {
   if (!frequency.value) {
@@ -106,21 +150,31 @@ function setLanguage(nextLanguage: Language) {
   localStorage.setItem('vocalwarm-language', nextLanguage)
 }
 
-async function playKeyboardNote(noteName: string, midi: number) {
-  window.clearTimeout(pressedMidiTimeout)
-  pressedMidi.value = midi
-  pressedMidiTimeout = window.setTimeout(() => {
-    pressedMidi.value = null
-  }, 240)
+function midiToNoteName(midi: number) {
+  const noteName = noteNames[((midi % 12) + 12) % 12]
 
+  return `${noteName}${Math.floor(midi / 12) - 1}`
+}
+
+async function ensureTone() {
   if (!toneModule) {
     toneModule = await import('tone')
   }
 
   await toneModule.start()
 
-  if (!keyboardSynth) {
-    keyboardSynth = new toneModule.Synth({
+  return toneModule
+}
+
+async function getKeyboardInstrument() {
+  const Tone = await ensureTone()
+
+  if (soundMode.value === 'piano') {
+    return loadPianoSampler()
+  }
+
+  if (!midiSynth) {
+    midiSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: {
         type: 'triangle'
       },
@@ -131,10 +185,98 @@ async function playKeyboardNote(noteName: string, midi: number) {
         release: 0.35
       }
     }).toDestination()
-    keyboardSynth.volume.value = -8
+    midiSynth.volume.value = 2
   }
 
-  keyboardSynth.triggerAttackRelease(noteName, '8n')
+  return midiSynth
+}
+
+async function loadPianoSampler() {
+  const Tone = await ensureTone()
+
+  if (!pianoSamplerLoadPromise) {
+    pianoSampler = new Tone.Sampler({
+      urls: pianoSampleUrls,
+      baseUrl: pianoSampleBaseUrl,
+      attack: 0.001,
+      release: 0.9
+    }).toDestination()
+    pianoSampler.volume.value = 4
+    pianoSamplerLoadPromise = Tone.loaded()
+      .then(() => pianoSampler)
+      .catch((error) => {
+        pianoSampler?.dispose()
+        pianoSampler = null
+        pianoSamplerLoadPromise = null
+        throw error
+      })
+  }
+
+  return pianoSamplerLoadPromise
+}
+
+function preloadPianoSampler() {
+  loadPianoSampler().catch((error) => {
+    console.warn('Piano samples failed to preload', error)
+  })
+}
+
+async function startKeyboardNote(noteName: string, midi: number) {
+  if (activeKeyboardNote === noteName) {
+    return
+  }
+
+  await stopKeyboardNote()
+  pressedMidi.value = midi
+  activeKeyboardNote = noteName
+
+  const instrument = await getKeyboardInstrument()
+  instrument.triggerAttack(noteName)
+}
+
+async function stopKeyboardNote(noteName = activeKeyboardNote) {
+  if (!noteName) {
+    return
+  }
+
+  const instrument = soundMode.value === 'piano' ? pianoSampler : midiSynth
+  instrument?.triggerRelease(noteName)
+
+  if (activeKeyboardNote === noteName) {
+    activeKeyboardNote = null
+    pressedMidi.value = null
+  }
+}
+
+async function setSoundMode(nextMode: SoundMode) {
+  await stopKeyboardNote()
+  soundMode.value = nextMode
+
+  if (nextMode === 'piano') {
+    preloadPianoSampler()
+  }
+}
+
+async function handleSelectedMidiInput(event: Event) {
+  selectedMidi.value = Number((event.target as HTMLInputElement).value)
+
+  if (isSliderHolding.value) {
+    await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
+  }
+}
+
+async function holdSelectedNote() {
+  if (isSliderHolding.value) {
+    return
+  }
+
+  isSliderHolding.value = true
+  await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
+}
+
+async function releaseSelectedNote() {
+  isSliderHolding.value = false
+  await stopKeyboardNote()
 }
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number) {
@@ -259,6 +401,7 @@ async function startListening() {
     source.connect(analyser)
     isListening.value = true
     statusKey.value = 'listening'
+    preloadPianoSampler()
     tick()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : t.value.micError
@@ -331,6 +474,19 @@ onBeforeUnmount(() => {
             </button>
           </div>
 
+          <div class="sound-switch" :aria-label="t.sound">
+            <button
+              v-for="mode in soundModes"
+              :key="mode"
+              type="button"
+              :class="{ active: soundMode === mode }"
+              :aria-pressed="soundMode === mode"
+              @click="setSoundMode(mode)"
+            >
+              {{ mode === 'midi' ? t.midiSound : t.pianoSound }}
+            </button>
+          </div>
+
           <button v-if="isListening" class="listen-button" type="button" @click="stopListening">
             {{ t.stop }}
           </button>
@@ -364,7 +520,32 @@ onBeforeUnmount(() => {
         <span>+50</span>
       </div>
 
-      <PianoKeyboard :active-midi="displayActiveMidi" :label="t.keyboardLabel" @play-note="playKeyboardNote" />
+      <PianoKeyboard
+        :active-midi="displayActiveMidi"
+        :label="t.keyboardLabel"
+        @note-start="startKeyboardNote"
+        @note-end="stopKeyboardNote"
+      />
+
+      <div class="note-slider">
+        <div class="slider-label">
+          <span>{{ t.keyboardControl }}</span>
+          <strong>{{ t.selectedNote }}: {{ selectedNoteLabel }}</strong>
+        </div>
+        <input
+          v-model.number="selectedMidi"
+          type="range"
+          min="36"
+          max="95"
+          step="1"
+          :aria-label="t.keyboardControl"
+          @input="handleSelectedMidiInput"
+          @keydown.space.prevent="holdSelectedNote"
+          @keyup.space.prevent="releaseSelectedNote"
+          @blur="releaseSelectedNote"
+        >
+        <p>{{ t.holdHint }}</p>
+      </div>
 
       <div class="volume">
         <div class="volume-label">
@@ -598,6 +779,72 @@ h1 {
   background: rgba(255, 253, 248, 0.66);
 }
 
+.note-slider {
+  position: relative;
+  z-index: 3;
+}
+
+.slider-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.slider-label,
+.note-slider p {
+  color: #5d6964;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.sound-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(78px, 1fr));
+  min-height: 42px;
+  padding: 4px;
+  border: 1px solid rgba(23, 32, 29, 0.14);
+  border-radius: 8px;
+  background: rgba(23, 32, 29, 0.07);
+}
+
+.sound-switch button {
+  border: 0;
+  border-radius: 6px;
+  color: #52615c;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.sound-switch button.active {
+  color: #fffaf0;
+  background: #277a73;
+  box-shadow: 0 4px 14px rgba(31, 41, 37, 0.13);
+}
+
+.note-slider {
+  display: grid;
+  gap: 10px;
+  margin: -8px 0 22px;
+}
+
+.slider-label strong {
+  color: #17201d;
+}
+
+.note-slider input {
+  width: 100%;
+  accent-color: #d74f2a;
+  cursor: ew-resize;
+}
+
+.note-slider p {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
 .readout {
   min-height: 210px;
   display: flex;
@@ -717,12 +964,21 @@ h1 {
   }
 
   .listen-button,
-  .language-switch {
+  .language-switch,
+  .sound-switch {
     width: 100%;
   }
 
-  .language-switch {
+  .language-switch,
+  .sound-switch {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sound-row,
+  .slider-label {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .readout {

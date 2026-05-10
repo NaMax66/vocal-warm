@@ -5,8 +5,17 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  playNote: [note: string, midi: number]
+  noteStart: [note: string, midi: number]
+  noteEnd: [note: string, midi: number]
 }>()
+
+function startNote(note: string, midi: number) {
+  emit('noteStart', note, midi)
+}
+
+function endNote(note: string, midi: number) {
+  emit('noteEnd', note, midi)
+}
 
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
@@ -51,7 +60,12 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
           :class="{ active: key.isActive }"
           :aria-label="key.label"
           :aria-current="key.isActive ? 'true' : undefined"
-          @click="emit('playNote', key.label, key.midi)"
+          @pointerdown.prevent="startNote(key.label, key.midi)"
+          @pointerup="endNote(key.label, key.midi)"
+          @pointercancel="endNote(key.label, key.midi)"
+          @pointerleave="endNote(key.label, key.midi)"
+          @keydown.space.prevent="startNote(key.label, key.midi)"
+          @keyup.space.prevent="endNote(key.label, key.midi)"
         >
           <span>{{ key.label }}</span>
         </button>
@@ -67,7 +81,12 @@ const blackKeys = computed(() => pianoKeys.value.filter((key) => key.isBlack))
           :style="{ '--after-white-count': key.afterWhiteCount }"
           :aria-label="key.label"
           :aria-current="key.isActive ? 'true' : undefined"
-          @click="emit('playNote', key.label, key.midi)"
+          @pointerdown.prevent="startNote(key.label, key.midi)"
+          @pointerup="endNote(key.label, key.midi)"
+          @pointercancel="endNote(key.label, key.midi)"
+          @pointerleave="endNote(key.label, key.midi)"
+          @keydown.space.prevent="startNote(key.label, key.midi)"
+          @keyup.space.prevent="endNote(key.label, key.midi)"
         >
           <span>{{ key.label }}</span>
         </button>
