@@ -16,6 +16,9 @@ export function useKeyboardAudio() {
   let pianoLimiter: any = null
   let pianoSamplerLoadPromise: Promise<any> | null = null
   let activeKeyboardNote: string | null = null
+  let activeKeyboardNoteStartedAt = 0
+  let releaseTimeoutId: ReturnType<typeof setTimeout> | null = null
+  let releaseTimeoutNote: string | null = null
 
   function applyInstrumentVolume() {
     if (pianoSampler) {
@@ -23,7 +26,18 @@ export function useKeyboardAudio() {
     }
   }
 
+  function clearPendingRelease() {
+    if (!releaseTimeoutId) {
+      return
+    }
+
+    clearTimeout(releaseTimeoutId)
+    releaseTimeoutId = null
+    releaseTimeoutNote = null
+  }
+
   function disposePianoSampler() {
+    clearPendingRelease()
     pianoSampler?.dispose()
     pianoLimiter?.dispose()
     pianoSampler = null
@@ -62,7 +76,7 @@ export function useKeyboardAudio() {
         urls: getPianoSampleUrls(selectedPianoPresetId.value),
         baseUrl: getPianoSampleBaseUrl(selectedPianoPresetId.value),
         attack: 0.001,
-        release: 0.9
+        release: 0.5
       }).connect(pianoLimiter)
       applyInstrumentVolume()
       pianoSamplerLoadPromise = Tone.loaded()
@@ -118,6 +132,13 @@ export function useKeyboardAudio() {
     await stopKeyboardNote()
     pressedMidi.value = midi
     activeKeyboardNote = noteName
+    activeKeyboardNoteStartedAt = performance.now()
+
+    const pendingReleaseNote = releaseTimeoutNote
+    clearPendingRelease()
+    if (pendingReleaseNote) {
+      pianoSampler?.triggerRelease(pendingReleaseNote)
+    }
 
     const instrument = await getKeyboardInstrument()
     instrument.triggerAttack(noteName)
@@ -128,10 +149,22 @@ export function useKeyboardAudio() {
       return
     }
 
-    pianoSampler?.triggerRelease(noteName)
+    const releaseDelayMs = Math.max(0, 500 - (performance.now() - activeKeyboardNoteStartedAt))
+
+    if (releaseTimeoutId) {
+      clearTimeout(releaseTimeoutId)
+    }
+
+    releaseTimeoutNote = noteName
+    releaseTimeoutId = setTimeout(() => {
+      pianoSampler?.triggerRelease(noteName)
+      releaseTimeoutId = null
+      releaseTimeoutNote = null
+    }, releaseDelayMs)
 
     if (activeKeyboardNote === noteName) {
       activeKeyboardNote = null
+      activeKeyboardNoteStartedAt = 0
       pressedMidi.value = null
     }
   }

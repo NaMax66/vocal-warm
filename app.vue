@@ -222,6 +222,7 @@ onBeforeUnmount(() => {
         <PianoKeyboard
           :detected-midi="activeMidi"
           :pressed-midi="pressedMidi"
+          :selected-midi="selectedMidi"
           :label="t.keyboardLabel"
           @note-start="startKeyboardNote"
           @note-end="stopKeyboardNote"
@@ -275,6 +276,8 @@ body {
 
 button {
   font: inherit;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .page-shell {
@@ -372,7 +375,7 @@ button {
   }
 
   .tuner-content {
-    padding-bottom: 92px;
+    padding-bottom: 120px;
   }
 
   .app-footer {

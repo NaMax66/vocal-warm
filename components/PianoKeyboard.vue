@@ -4,6 +4,7 @@ import { keyboardMaxMidi, keyboardMinMidi, noteNames } from '~/composables/useNo
 const props = defineProps<{
   detectedMidi: number | null
   pressedMidi: number | null
+  selectedMidi: number
   label: string
 }>()
 
@@ -44,6 +45,7 @@ const pianoKeys = computed(() => {
       afterWhiteCount,
       isDetected: props.detectedMidi === midi,
       isPressed: props.pressedMidi === midi,
+      isSelected: props.selectedMidi === midi,
       isCombined: props.detectedMidi === midi && props.pressedMidi === midi
     }
   })
@@ -75,7 +77,12 @@ onMounted(async () => {
           :key="key.midi"
           type="button"
           class="piano-key white"
-          :class="{ detected: key.isDetected, pressed: key.isPressed, combined: key.isCombined }"
+          :class="{
+            detected: key.isDetected,
+            pressed: key.isPressed,
+            selected: key.isSelected,
+            combined: key.isCombined
+          }"
           :aria-label="key.label"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.label, key.midi)"
@@ -95,7 +102,12 @@ onMounted(async () => {
           :key="key.midi"
           type="button"
           class="piano-key black"
-          :class="{ detected: key.isDetected, pressed: key.isPressed, combined: key.isCombined }"
+          :class="{
+            detected: key.isDetected,
+            pressed: key.isPressed,
+            selected: key.isSelected,
+            combined: key.isCombined
+          }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
           :aria-label="key.label"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
@@ -157,10 +169,10 @@ onMounted(async () => {
   cursor: pointer;
   letter-spacing: 0;
   transition:
-    background 120ms ease,
-    box-shadow 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
+    background 500ms ease,
+    box-shadow 500ms ease,
+    color 500ms ease,
+    transform 500ms ease;
 }
 
 .piano-key:active {
@@ -220,6 +232,34 @@ onMounted(async () => {
     0 0 0 3px rgba(139, 111, 200, 0.24),
     0 10px 30px rgba(139, 111, 200, 0.34);
   transform: translateY(-2px);
+}
+
+.piano-key.selected::after {
+  content: "×";
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  color: #fffaf0;
+  background: #d74f2a;
+  box-shadow: 0 2px 6px rgba(159, 47, 26, 0.32);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.piano-key.black.selected::after {
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  font-size: 11px;
 }
 
 .piano-key span {

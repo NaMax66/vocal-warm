@@ -146,7 +146,7 @@ defineEmits<{
     left: 5px;
     z-index: 35;
     margin: 0;
-    padding: 8px;
+    padding: 10px;
     border-radius: 8px;
     background: rgba(255, 252, 244, 0.9);
     box-shadow: 0 14px 36px rgba(31, 41, 37, 0.16);
@@ -154,12 +154,12 @@ defineEmits<{
   }
 
   .control-buttons {
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
-    gap: 6px;
+    grid-template-columns: 56px minmax(0, 1fr) 56px;
+    gap: 8px;
   }
 
   .control-key {
-    min-height: 44px;
+    min-height: 60px;
   }
 
   .keyboard-control-pad p {

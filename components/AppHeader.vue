@@ -24,6 +24,23 @@ defineEmits<{
 }>()
 
 const isSoundMenuOpen = ref(false)
+const soundMenu = ref<HTMLElement | null>(null)
+
+function closeSoundMenuOnOutsideClick(event: PointerEvent) {
+  if (!soundMenu.value || soundMenu.value.contains(event.target as Node)) {
+    return
+  }
+
+  isSoundMenuOpen.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', closeSoundMenuOnOutsideClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeSoundMenuOnOutsideClick)
+})
 </script>
 
 <template>
@@ -55,7 +72,7 @@ const isSoundMenuOpen = ref(false)
         </button>
       </div>
 
-      <div v-if="isListening" class="sound-menu">
+      <div v-if="isListening" ref="soundMenu" class="sound-menu">
         <button
           class="sound-button"
           :class="{ loading: isPianoSamplerLoading }"
