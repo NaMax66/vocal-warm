@@ -21,25 +21,25 @@ defineProps<{
 
 <style scoped>
 .readout {
-  min-height: 210px;
+  min-height: 160px;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  margin: 32px 0 18px;
+  margin: 18px 0 10px;
   color: #162c39;
 }
 
 .note {
-  font-size: clamp(7rem, 28vw, 14rem);
+  font-size: clamp(5rem, 20vw, 10rem);
   font-weight: 900;
   line-height: 0.82;
   letter-spacing: 0;
 }
 
 .octave {
-  min-width: 48px;
+  min-width: 38px;
   color: #277a73;
-  font-size: clamp(2.6rem, 8vw, 5rem);
+  font-size: clamp(2rem, 6vw, 3.8rem);
   font-weight: 850;
 }
 
@@ -55,7 +55,23 @@ defineProps<{
 
 @media (max-width: 560px) {
   .readout {
-    min-height: 170px;
+    min-height: 90px;
+    margin: 8px 0 6px;
+  }
+
+  .note {
+    font-size: clamp(4.2rem, 24vw, 6rem);
+  }
+
+  .octave {
+    min-width: 28px;
+    font-size: clamp(1.6rem, 9vw, 2.4rem);
+  }
+
+  .frequency-row {
+    gap: 10px;
+    padding: 0 8px;
+    font-size: 0.92rem;
   }
 }
 </style>

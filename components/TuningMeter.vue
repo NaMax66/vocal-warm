@@ -22,7 +22,7 @@ defineProps<{
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: 26px 0;
+  margin: 18px 0;
   color: #63706b;
   font-size: 0.82rem;
   font-weight: 700;
@@ -69,6 +69,22 @@ defineProps<{
 @media (max-width: 560px) {
   .tuning-meter {
     gap: 10px;
+    margin: 12px 6px;
+    font-size: 0.72rem;
+  }
+
+  .rail {
+    height: 34px;
+  }
+
+  .rail::after {
+    inset: 9px;
+  }
+
+  .center-line,
+  .needle {
+    top: 6px;
+    height: 22px;
   }
 }
 </style>

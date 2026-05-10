@@ -144,12 +144,14 @@ h1 {
 
 @media (max-width: 560px) {
   .topbar {
-    min-height: 220px;
+    min-height: 118px;
   }
 
   h1 {
-    margin-top: 36px;
+    margin-top: 28px;
+    padding: 0 8px;
     text-align: center;
+    font-size: clamp(2.1rem, 13vw, 3.2rem);
   }
 
   .controls {

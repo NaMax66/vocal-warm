@@ -83,7 +83,12 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 @media (max-width: 560px) {
   .volume {
     width: min(76%, 320px);
-    margin-top: 14px;
+    margin-top: 8px;
+    gap: 5px;
+  }
+
+  .volume-steps {
+    height: 22px;
   }
 }
 </style>

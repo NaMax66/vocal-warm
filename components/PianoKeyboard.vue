@@ -217,13 +217,30 @@ onMounted(async () => {
 
 @media (max-width: 560px) {
   .keyboard-wrap {
-    margin: 0 0 24px;
+    margin: 0 0 12px;
   }
 
   .keyboard {
     --white-key-width: 32px;
     --black-key-width: 21px;
+    height: 124px;
     min-width: 1120px;
+  }
+
+  .white-keys {
+    height: 124px;
+  }
+
+  .black-keys {
+    height: 76px;
+  }
+
+  .piano-key.white {
+    height: 124px;
+  }
+
+  .piano-key.black {
+    height: 76px;
   }
 }
 </style>
