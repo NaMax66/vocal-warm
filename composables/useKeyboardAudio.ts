@@ -8,7 +8,7 @@ import {
 
 export function useKeyboardAudio() {
   const pressedMidi = ref<number | null>(null)
-  const selectedPianoPresetId = ref<PianoSamplePresetId>('velocity1')
+  const selectedPianoPresetId = ref<PianoSamplePresetId>('velocity16')
   const isPianoSamplerLoading = ref(false)
 
   let toneModule: typeof import('tone') | null = null

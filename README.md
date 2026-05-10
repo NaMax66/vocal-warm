@@ -24,6 +24,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Piano samples are loaded from public `@audio-samples/piano-velocity*` packages on jsDelivr.
 - The sound settings gear under the `Stop` button lets users choose the piano velocity layer: `Soft` (`velocity1`, +18 dB), `Light` (`velocity2`, +14 dB), `Full` (`velocity8`, +8 dB), `Strong` (`velocity12`, +4 dB), or `Bright` (`velocity16`, +2 dB).
 - The selected sample preset is stored in `localStorage` as `vocalwarm-piano-preset`.
+- The default sample preset is `Bright` (`velocity16`) unless a saved user choice exists.
 - Switching sample presets preloads the new sampler immediately and shows a small loading indicator while samples are loading.
 - Piano playback is routed through a `Tone.Limiter(-1)` to reduce clipping after sample gain boosts.
 - Salamander Grand Piano samples are by Alexander Holm and are licensed under CC BY 3.0.
