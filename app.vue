@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { copy, supportedLanguages, type Language, type StatusKey } from '~/utils/i18n'
-import { pianoSampleBaseUrl, pianoSampleUrls } from '~/utils/pianoSamples'
+import { soundModes, useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import { frequencyToMidi, isMidiInKeyboardRange, midiToFrequency, midiToNoteName, noteNames } from '~/composables/useNoteMath'
-
-type SoundMode = 'midi' | 'piano'
-
-const soundModes: SoundMode[] = ['midi', 'piano']
 
 const language = ref<Language>('en')
 const isListening = ref(false)
@@ -14,14 +10,22 @@ const frequency = ref<number | null>(null)
 const note = ref('--')
 const octave = ref('')
 const activeMidi = ref<number | null>(null)
-const pressedMidi = ref<number | null>(null)
 const selectedMidi = ref(60)
-const soundMode = ref<SoundMode>('piano')
 const isSliderHolding = ref(false)
-const instrumentVolume = ref(100)
 const cents = ref(0)
 const volume = ref(0)
 const errorMessage = ref('')
+const {
+  soundMode,
+  pressedMidi,
+  instrumentVolume,
+  startKeyboardNote,
+  stopKeyboardNote,
+  setSoundMode,
+  setInstrumentVolume,
+  preloadPianoSampler,
+  disposeKeyboardAudio
+} = useKeyboardAudio()
 
 let audioContext: AudioContext | null = null
 let analyser: AnalyserNode | null = null
@@ -29,17 +33,11 @@ let source: MediaStreamAudioSourceNode | null = null
 let stream: MediaStream | null = null
 let animationId = 0
 let sampleBuffer: Float32Array | null = null
-let toneModule: typeof import('tone') | null = null
-let midiSynth: any = null
-let pianoSampler: any = null
-let pianoSamplerLoadPromise: Promise<any> | null = null
-let activeKeyboardNote: string | null = null
 
 const t = computed(() => copy[language.value])
 const status = computed(() => t.value.status[statusKey.value])
 const displayActiveMidi = computed(() => activeMidi.value ?? pressedMidi.value)
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
-const instrumentVolumeDb = computed(() => Math.round(-28 + (instrumentVolume.value / 100) * 40))
 
 const centsLabel = computed(() => {
   if (!frequency.value) {
@@ -70,117 +68,6 @@ function setLanguage(nextLanguage: Language) {
   localStorage.setItem('vocalwarm-language', nextLanguage)
 }
 
-function applyInstrumentVolume() {
-  if (midiSynth) {
-    midiSynth.volume.value = instrumentVolumeDb.value
-  }
-
-  if (pianoSampler) {
-    pianoSampler.volume.value = instrumentVolumeDb.value
-  }
-}
-
-async function ensureTone() {
-  if (!toneModule) {
-    toneModule = await import('tone')
-  }
-
-  await toneModule.start()
-
-  return toneModule
-}
-
-async function getKeyboardInstrument() {
-  const Tone = await ensureTone()
-
-  if (soundMode.value === 'piano') {
-    return loadPianoSampler()
-  }
-
-  if (!midiSynth) {
-    midiSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'triangle'
-      },
-      envelope: {
-        attack: 0.01,
-        decay: 0.12,
-        sustain: 0.28,
-        release: 0.35
-      }
-    }).toDestination()
-    applyInstrumentVolume()
-  }
-
-  return midiSynth
-}
-
-async function loadPianoSampler() {
-  const Tone = await ensureTone()
-
-  if (!pianoSamplerLoadPromise) {
-    pianoSampler = new Tone.Sampler({
-      urls: pianoSampleUrls,
-      baseUrl: pianoSampleBaseUrl,
-      attack: 0.001,
-      release: 0.9
-    }).toDestination()
-    applyInstrumentVolume()
-    pianoSamplerLoadPromise = Tone.loaded()
-      .then(() => pianoSampler)
-      .catch((error) => {
-        pianoSampler?.dispose()
-        pianoSampler = null
-        pianoSamplerLoadPromise = null
-        throw error
-      })
-  }
-
-  return pianoSamplerLoadPromise
-}
-
-function preloadPianoSampler() {
-  loadPianoSampler().catch((error) => {
-    console.warn('Piano samples failed to preload', error)
-  })
-}
-
-async function startKeyboardNote(noteName: string, midi: number) {
-  if (activeKeyboardNote === noteName) {
-    return
-  }
-
-  await stopKeyboardNote()
-  pressedMidi.value = midi
-  activeKeyboardNote = noteName
-
-  const instrument = await getKeyboardInstrument()
-  instrument.triggerAttack(noteName)
-}
-
-async function stopKeyboardNote(noteName = activeKeyboardNote) {
-  if (!noteName) {
-    return
-  }
-
-  const instrument = soundMode.value === 'piano' ? pianoSampler : midiSynth
-  instrument?.triggerRelease(noteName)
-
-  if (activeKeyboardNote === noteName) {
-    activeKeyboardNote = null
-    pressedMidi.value = null
-  }
-}
-
-async function setSoundMode(nextMode: SoundMode) {
-  await stopKeyboardNote()
-  soundMode.value = nextMode
-
-  if (nextMode === 'piano') {
-    preloadPianoSampler()
-  }
-}
-
 async function handleSelectedMidiInput(event: Event) {
   selectedMidi.value = Number((event.target as HTMLInputElement).value)
 
@@ -190,8 +77,7 @@ async function handleSelectedMidiInput(event: Event) {
 }
 
 function handleInstrumentVolumeInput(event: Event) {
-  instrumentVolume.value = Number((event.target as HTMLInputElement).value)
-  applyInstrumentVolume()
+  setInstrumentVolume(Number((event.target as HTMLInputElement).value))
 }
 
 async function holdSelectedNote() {
@@ -374,8 +260,7 @@ useHead(() => ({
 }))
 
 onBeforeUnmount(() => {
-  midiSynth?.dispose()
-  pianoSampler?.dispose()
+  disposeKeyboardAudio()
   stopListening()
 })
 </script>

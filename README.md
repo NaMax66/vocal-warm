@@ -13,6 +13,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Shared translations live in `utils/i18n.ts`.
 - Piano sample CDN settings live in `utils/pianoSamples.ts`.
 - Shared note math and keyboard range constants live in `composables/useNoteMath.ts`.
+- Keyboard audio, Tone.js instruments, sampler preload, sound mode, and instrument volume live in `composables/useKeyboardAudio.ts`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
