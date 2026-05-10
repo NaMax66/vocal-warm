@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { keyboardMaxMidi, keyboardMinMidi, noteNames } from '~/composables/useNoteMath'
+
 const props = defineProps<{
   activeMidi: number | null
   label: string
@@ -17,14 +19,13 @@ function endNote(note: string, midi: number) {
   emit('noteEnd', note, midi)
 }
 
-const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
 
 const pianoKeys = computed(() => {
   let whiteCount = 0
 
-  return Array.from({ length: 60 }, (_, index) => {
-    const midi = 36 + index
+  return Array.from({ length: keyboardMaxMidi - keyboardMinMidi + 1 }, (_, index) => {
+    const midi = keyboardMinMidi + index
     const noteName = noteNames[((midi % 12) + 12) % 12]
     const isBlack = blackNoteNames.has(noteName)
     const afterWhiteCount = whiteCount

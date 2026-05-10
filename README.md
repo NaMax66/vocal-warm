@@ -10,6 +10,9 @@ Russian documentation: [README.ru.md](README.ru.md)
 - App type: Nuxt 3 single-page app.
 - Main screen and pitch logic live in `app.vue`.
 - The C2-B6 piano keyboard lives in `components/PianoKeyboard.vue`.
+- Shared translations live in `utils/i18n.ts`.
+- Piano sample CDN settings live in `utils/pianoSamples.ts`.
+- Shared note math and keyboard range constants live in `composables/useNoteMath.ts`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
