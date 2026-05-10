@@ -3,19 +3,21 @@ type Language = 'en' | 'ru'
 type StatusKey = 'idle' | 'listening' | 'waiting' | 'stopped' | 'micUnavailable'
 
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
 const supportedLanguages: Language[] = ['en', 'ru']
 const copy = {
   en: {
     title: 'Vocal warmup by notes',
     start: 'Start',
     stop: 'Stop',
+    inactiveSession: 'Session inactive',
+    startHint: 'Tap anywhere to start listening',
     volume: 'Volume',
     waitingForSound: 'Waiting for a steady sound',
     inTune: 'in tune',
     sharp: (value: number) => `${value} c. sharp`,
     flat: (value: number) => `${value} c. flat`,
     meterLabel: 'Offset from the nearest note',
+    keyboardLabel: 'Piano keyboard from C2 to B6',
     status: {
       idle: 'Press start and allow microphone access',
       listening: 'Listening',
@@ -29,12 +31,15 @@ const copy = {
     title: '\u0420\u0430\u0441\u043f\u0435\u0432\u043a\u0430 \u043f\u043e \u043d\u043e\u0442\u0430\u043c',
     start: '\u0421\u0442\u0430\u0440\u0442',
     stop: '\u0421\u0442\u043e\u043f',
+    inactiveSession: '\u0421\u0435\u0441\u0441\u0438\u044f \u043d\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u0430',
+    startHint: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0432 \u043b\u044e\u0431\u043e\u0435 \u043c\u0435\u0441\u0442\u043e, \u0447\u0442\u043e\u0431\u044b \u043d\u0430\u0447\u0430\u0442\u044c',
     volume: '\u0413\u0440\u043e\u043c\u043a\u043e\u0441\u0442\u044c',
     waitingForSound: '\u0416\u0434\u0443 \u0443\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u044b\u0439 \u0437\u0432\u0443\u043a',
     inTune: '\u0442\u043e\u0447\u043d\u043e',
     sharp: (value: number) => `\u0432\u044b\u0448\u0435 \u043d\u0430 ${value} \u0446.`,
     flat: (value: number) => `\u043d\u0438\u0436\u0435 \u043d\u0430 ${value} \u0446.`,
     meterLabel: '\u041e\u0442\u043a\u043b\u043e\u043d\u0435\u043d\u0438\u0435 \u043e\u0442 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0439 \u043d\u043e\u0442\u044b',
+    keyboardLabel: '\u0424\u043e\u0440\u0442\u0435\u043f\u0438\u0430\u043d\u043d\u0430\u044f \u043a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u0430 \u043e\u0442 C2 \u0434\u043e B6',
     status: {
       idle: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0441\u0442\u0430\u0440\u0442 \u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u0435 \u0434\u043e\u0441\u0442\u0443\u043f \u043a \u043c\u0438\u043a\u0440\u043e\u0444\u043e\u043d\u0443',
       listening: '\u0421\u043b\u0443\u0448\u0430\u044e',
@@ -86,21 +91,6 @@ const meterStyle = computed(() => ({
 const volumeStyle = computed(() => ({
   width: `${Math.min(100, Math.round(volume.value * 180))}%`
 }))
-
-const pianoKeys = computed(() => {
-  return Array.from({ length: 60 }, (_, index) => {
-    const midi = 36 + index
-    const noteName = noteNames[((midi % 12) + 12) % 12]
-
-    return {
-      midi,
-      noteName,
-      label: `${noteName}${Math.floor(midi / 12) - 1}`,
-      isBlack: blackNoteNames.has(noteName),
-      isActive: activeMidi.value === midi
-    }
-  })
-})
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
   return browserLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
@@ -280,7 +270,7 @@ onBeforeUnmount(stopListening)
 
 <template>
   <main class="page-shell">
-    <section class="tuner">
+    <section class="tuner" :class="{ inactive: !isListening }">
       <div class="topbar">
         <div>
           <p class="eyebrow">VocalWarm</p>
@@ -301,11 +291,17 @@ onBeforeUnmount(stopListening)
             </button>
           </div>
 
-          <button class="listen-button" type="button" @click="isListening ? stopListening() : startListening()">
-            {{ isListening ? t.stop : t.start }}
+          <button v-if="isListening" class="listen-button" type="button" @click="stopListening">
+            {{ t.stop }}
           </button>
         </div>
       </div>
+
+      <button v-if="!isListening" class="start-overlay" type="button" @click="startListening">
+        <span class="overlay-kicker">{{ t.inactiveSession }}</span>
+        <span class="overlay-action">{{ t.start }}</span>
+        <span class="overlay-hint">{{ t.startHint }}</span>
+      </button>
 
       <div class="readout" aria-live="polite">
         <span class="note">{{ note }}</span>
@@ -326,21 +322,7 @@ onBeforeUnmount(stopListening)
         <span>+50</span>
       </div>
 
-      <div class="keyboard-wrap" aria-label="Piano keyboard from C2 to B6">
-        <div class="keyboard">
-          <button
-            v-for="key in pianoKeys"
-            :key="key.midi"
-            type="button"
-            class="piano-key"
-            :class="{ black: key.isBlack, white: !key.isBlack, active: key.isActive }"
-            :aria-label="key.label"
-            :aria-current="key.isActive ? 'true' : undefined"
-          >
-            <span>{{ key.label }}</span>
-          </button>
-        </div>
-      </div>
+      <PianoKeyboard :active-midi="activeMidi" :label="t.keyboardLabel" />
 
       <div class="volume">
         <div class="volume-label">
@@ -389,6 +371,7 @@ button {
 }
 
 .tuner {
+  position: relative;
   width: 100%;
   max-width: 960px;
   min-width: 0;
@@ -398,6 +381,7 @@ button {
   background: rgba(255, 252, 244, 0.92);
   box-shadow: 0 24px 80px rgba(31, 41, 37, 0.18);
   backdrop-filter: blur(18px);
+  overflow: hidden;
 }
 
 .topbar,
@@ -411,6 +395,8 @@ button {
 }
 
 .topbar {
+  position: relative;
+  z-index: 3;
   align-items: flex-start;
 }
 
@@ -480,6 +466,92 @@ h1 {
 .listen-button:hover {
   background: #b83e20;
   transform: translateY(-1px);
+}
+
+.start-overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 0;
+  border-radius: inherit;
+  color: #17201d;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 244, 0.3), rgba(232, 242, 236, 0.14)),
+    rgba(255, 252, 244, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(2px) saturate(1.06);
+  cursor: pointer;
+  text-align: center;
+}
+
+.start-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.start-overlay:hover .overlay-action {
+  transform: translateY(-2px);
+  background: rgba(255, 252, 244, 0.58);
+  border-color: rgba(215, 79, 42, 0.56);
+}
+
+.overlay-kicker,
+.overlay-hint {
+  position: relative;
+  z-index: 1;
+  color: #52615c;
+  font-weight: 800;
+}
+
+.overlay-kicker {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.overlay-action {
+  position: relative;
+  z-index: 1;
+  min-width: min(74vw, 320px);
+  padding: 22px 42px;
+  border: 1px solid rgba(215, 79, 42, 0.32);
+  border-radius: 8px;
+  color: #d74f2a;
+  background: rgba(255, 252, 244, 0.42);
+  box-shadow:
+    0 18px 60px rgba(31, 41, 37, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(10px) saturate(1.1);
+  font-size: clamp(2.2rem, 8vw, 5.8rem);
+  font-weight: 900;
+  line-height: 1;
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.overlay-hint {
+  max-width: min(70vw, 380px);
+  font-size: 0.96rem;
+}
+
+.tuner.inactive .piano-key.black {
+  color: rgba(255, 250, 240, 0.28);
+  background: rgba(23, 32, 29, 0.56);
+  box-shadow: 0 4px 12px rgba(23, 32, 29, 0.1);
+}
+
+.tuner.inactive .piano-key.white {
+  color: rgba(82, 97, 92, 0.42);
+  background: rgba(255, 253, 248, 0.66);
 }
 
 .readout {
@@ -561,90 +633,6 @@ h1 {
   gap: 10px;
 }
 
-.keyboard-wrap {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  margin: 4px -8px 24px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 8px;
-  scrollbar-color: rgba(23, 32, 29, 0.28) transparent;
-  scrollbar-width: thin;
-}
-
-.keyboard {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(60, 30px);
-  align-items: start;
-  width: max-content;
-  min-width: 100%;
-  height: 132px;
-  padding: 0 2px;
-}
-
-.piano-key {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  border: 0;
-  cursor: default;
-  letter-spacing: 0;
-  transition:
-    background 120ms ease,
-    box-shadow 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
-}
-
-.piano-key.white {
-  z-index: 1;
-  width: 32px;
-  height: 132px;
-  margin-left: -1px;
-  border: 1px solid rgba(23, 32, 29, 0.18);
-  border-radius: 0 0 6px 6px;
-  color: #52615c;
-  background: #fffdf8;
-  box-shadow: inset 0 -10px 16px rgba(23, 32, 29, 0.05);
-}
-
-.piano-key.black {
-  z-index: 2;
-  width: 20px;
-  height: 82px;
-  margin-left: -10px;
-  border-radius: 0 0 5px 5px;
-  color: rgba(255, 250, 240, 0.72);
-  background: #17201d;
-  box-shadow: 0 7px 14px rgba(23, 32, 29, 0.24);
-}
-
-.piano-key.active {
-  color: #fffaf0;
-  background: #d74f2a;
-  box-shadow:
-    0 0 0 3px rgba(215, 79, 42, 0.22),
-    0 10px 28px rgba(215, 79, 42, 0.32);
-  transform: translateY(-2px);
-}
-
-.piano-key span {
-  display: block;
-  padding-bottom: 10px;
-  font-size: 0.68rem;
-  font-weight: 850;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.piano-key.black span {
-  padding-bottom: 8px;
-  font-size: 0.58rem;
-}
-
 .volume-label {
   color: #5d6964;
   font-size: 0.92rem;
@@ -701,20 +689,5 @@ h1 {
     gap: 10px;
   }
 
-  .keyboard-wrap {
-    margin-right: -14px;
-    margin-left: -14px;
-    padding-right: 14px;
-    padding-left: 14px;
-  }
-
-  .keyboard {
-    grid-template-columns: repeat(60, 28px);
-    min-width: 1680px;
-  }
-
-  .piano-key.white {
-    width: 30px;
-  }
 }
 </style>

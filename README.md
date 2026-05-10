@@ -6,9 +6,10 @@ Russian documentation: [README.ru.md](README.ru.md)
 
 ## Project Notes
 
-- Project folder: `C:\Users\maxim\Documents\Codex\VocalWarm`
+- Project folder: `\Documents\Codex\VocalWarm`
 - App type: Nuxt 3 single-page app.
-- Main UI and pitch logic live in `app.vue`.
+- Main screen and pitch logic live in `app.vue`.
+- The C2-B6 piano keyboard lives in `components/PianoKeyboard.vue`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
 - Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
