@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { copy, supportedLanguages, type Language } from '~/utils/i18n'
-import { soundModes, useKeyboardAudio } from '~/composables/useKeyboardAudio'
+import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import { midiToNoteName } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
 
@@ -23,13 +23,9 @@ const {
 } = usePitchDetector()
 
 const {
-  soundMode,
   pressedMidi,
-  instrumentVolume,
   startKeyboardNote,
   stopKeyboardNote,
-  setSoundMode,
-  setInstrumentVolume,
   preloadPianoSampler,
   disposeKeyboardAudio
 } = useKeyboardAudio()
@@ -76,10 +72,6 @@ async function handleSelectedMidiInput(event: Event) {
   }
 }
 
-function handleInstrumentVolumeInput(event: Event) {
-  setInstrumentVolume(Number((event.target as HTMLInputElement).value))
-}
-
 async function holdSelectedNote() {
   if (isSliderHolding.value) {
     return
@@ -121,21 +113,48 @@ onBeforeUnmount(() => {
 <template>
   <main class="page-shell">
     <section class="tuner" :class="{ inactive: !isListening }">
-      <AppHeader
-        :title="t.title"
-        :language="language"
-        :languages="supportedLanguages"
-        :sound-mode="soundMode"
-        :sound-modes="soundModes"
-        :sound-label="t.sound"
-        :midi-label="t.midiSound"
-        :piano-label="t.pianoSound"
-        :stop-label="t.stop"
-        :is-listening="isListening"
-        @set-language="setLanguage"
-        @set-sound-mode="setSoundMode"
-        @stop="stopListening"
-      />
+      <div class="tuner-content" :inert="!isListening" :aria-hidden="!isListening">
+        <AppHeader
+          :title="t.title"
+          :language="language"
+          :languages="supportedLanguages"
+          :stop-label="t.stop"
+          :is-listening="isListening"
+          @set-language="setLanguage"
+          @stop="stopListening"
+        />
+
+        <PitchReadout
+          :note="note"
+          :octave="octave"
+          :frequency="frequency"
+          :cents-label="centsLabel"
+        />
+
+        <TuningMeter :label="t.meterLabel" :needle-style="meterStyle" />
+
+        <PianoKeyboard
+          :active-midi="displayActiveMidi"
+          :label="t.keyboardLabel"
+          @note-start="startKeyboardNote"
+          @note-end="stopKeyboardNote"
+        />
+
+        <KeyboardControls
+          :selected-midi="selectedMidi"
+          :keyboard-label="t.keyboardControl"
+          :selected-note-text="t.selectedNote"
+          :selected-note-label="selectedNoteLabel"
+          :hold-hint="t.holdHint"
+          @selected-midi-input="handleSelectedMidiInput"
+          @hold-selected-note="holdSelectedNote"
+          @release-selected-note="releaseSelectedNote"
+        />
+
+        <VolumeMeter :label="t.volume" :status="status" :bar-style="volumeStyle" />
+
+        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+      </div>
 
       <StartOverlay
         v-if="!isListening"
@@ -144,40 +163,6 @@ onBeforeUnmount(() => {
         :hint="t.startHint"
         @start="startListening"
       />
-
-      <PitchReadout
-        :note="note"
-        :octave="octave"
-        :frequency="frequency"
-        :cents-label="centsLabel"
-      />
-
-      <TuningMeter :label="t.meterLabel" :needle-style="meterStyle" />
-
-      <PianoKeyboard
-        :active-midi="displayActiveMidi"
-        :label="t.keyboardLabel"
-        @note-start="startKeyboardNote"
-        @note-end="stopKeyboardNote"
-      />
-
-      <KeyboardControls
-        :instrument-volume="instrumentVolume"
-        :selected-midi="selectedMidi"
-        :volume-label="t.instrumentVolume"
-        :keyboard-label="t.keyboardControl"
-        :selected-note-text="t.selectedNote"
-        :selected-note-label="selectedNoteLabel"
-        :hold-hint="t.holdHint"
-        @instrument-volume-input="handleInstrumentVolumeInput"
-        @selected-midi-input="handleSelectedMidiInput"
-        @hold-selected-note="holdSelectedNote"
-        @release-selected-note="releaseSelectedNote"
-      />
-
-      <VolumeMeter :label="t.volume" :status="status" :bar-style="volumeStyle" />
-
-      <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     </section>
   </main>
 </template>
@@ -236,6 +221,19 @@ button {
 .tuner.inactive .piano-key.white {
   color: rgba(82, 97, 92, 0.42);
   background: rgba(255, 253, 248, 0.66);
+}
+
+.tuner.inactive .topbar {
+  z-index: auto;
+}
+
+.tuner.inactive .topbar > :first-child {
+  position: relative;
+  z-index: 30;
+}
+
+.tuner-content {
+  position: relative;
 }
 
 .error {

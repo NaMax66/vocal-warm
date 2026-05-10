@@ -1,23 +1,16 @@
 <script setup lang="ts">
 import type { Language } from '~/utils/i18n'
-import type { SoundMode } from '~/composables/useKeyboardAudio'
 
 defineProps<{
   title: string
   language: Language
   languages: readonly Language[]
-  soundMode: SoundMode
-  soundModes: readonly SoundMode[]
-  soundLabel: string
-  midiLabel: string
-  pianoLabel: string
   stopLabel: string
   isListening: boolean
 }>()
 
 defineEmits<{
   setLanguage: [language: Language]
-  setSoundMode: [mode: SoundMode]
   stop: []
 }>()
 </script>
@@ -43,19 +36,6 @@ defineEmits<{
         </button>
       </div>
 
-      <div class="sound-switch" :aria-label="soundLabel">
-        <button
-          v-for="mode in soundModes"
-          :key="mode"
-          type="button"
-          :class="{ active: soundMode === mode }"
-          :aria-pressed="soundMode === mode"
-          @click="$emit('setSoundMode', mode)"
-        >
-          {{ mode === 'midi' ? midiLabel : pianoLabel }}
-        </button>
-      </div>
-
       <button v-if="isListening" class="listen-button" type="button" @click="$emit('stop')">
         {{ stopLabel }}
       </button>
@@ -67,13 +47,13 @@ defineEmits<{
 .topbar {
   position: relative;
   z-index: 3;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 152px;
 }
 
 .controls {
+  position: absolute;
+  top: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -96,8 +76,7 @@ h1 {
   letter-spacing: 0;
 }
 
-.language-switch,
-.sound-switch {
+.language-switch {
   display: inline-grid;
   min-height: 42px;
   padding: 4px;
@@ -111,12 +90,7 @@ h1 {
   min-height: 48px;
 }
 
-.sound-switch {
-  grid-template-columns: repeat(2, minmax(78px, 1fr));
-}
-
-.language-switch button,
-.sound-switch button {
+.language-switch button {
   border: 0;
   border-radius: 6px;
   color: #52615c;
@@ -129,12 +103,6 @@ h1 {
 .language-switch button.active {
   color: #17201d;
   background: #fffaf0;
-  box-shadow: 0 4px 14px rgba(31, 41, 37, 0.13);
-}
-
-.sound-switch button.active {
-  color: #fffaf0;
-  background: #277a73;
   box-shadow: 0 4px 14px rgba(31, 41, 37, 0.13);
 }
 
@@ -158,21 +126,25 @@ h1 {
 }
 
 @media (max-width: 560px) {
-  .topbar,
+  .topbar {
+    min-height: 220px;
+  }
+
   .controls {
+    top: auto;
+    right: auto;
+    bottom: 0;
     width: 100%;
     align-items: stretch;
     flex-direction: column;
   }
 
   .listen-button,
-  .language-switch,
-  .sound-switch {
+  .language-switch {
     width: 100%;
   }
 
-  .language-switch,
-  .sound-switch {
+  .language-switch {
     grid-template-columns: repeat(2, 1fr);
   }
 }
