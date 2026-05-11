@@ -237,7 +237,7 @@ watch([note, octave], ([nextNote, nextOctave]) => {
     stableOctave.value = nextOctave
     isPitchReadoutVisible.value = true
     stableNoteTimeoutId = null
-  }, 3000)
+  }, 1000)
 })
 
 onMounted(() => {
@@ -289,30 +289,31 @@ onBeforeUnmount(() => {
 <template>
   <main class="page-shell">
     <section class="tuner" :class="{ inactive: !isListening }">
+      <AppHeader
+        :title="t.title"
+        :language="language"
+        :languages="supportedLanguages"
+        :note-notation="noteNotation"
+        :note-notations="noteNotations"
+        :note-notation-labels="noteNotationLabels"
+        :repo-url="repoUrl"
+        :app-version="appVersion"
+        :stop-label="t.stop"
+        :is-listening="isListening"
+        :sound-settings-label="t.soundSettings"
+        :sound-presets="pianoSamplePresets"
+        :sound-preset-labels="t.soundPresets"
+        :sound-description="t.soundDescription"
+        :sound-loading-label="t.soundLoading"
+        :selected-piano-preset-id="selectedPianoPresetId"
+        :is-piano-sampler-loading="isPianoSamplerLoading"
+        @set-language="setLanguage"
+        @set-note-notation="setNoteNotation"
+        @stop="stopListening"
+        @set-piano-sample-preset="selectPianoSamplePreset"
+      />
+
       <div class="tuner-content">
-        <AppHeader
-          :title="t.title"
-          :language="language"
-          :languages="supportedLanguages"
-          :note-notation="noteNotation"
-          :note-notations="noteNotations"
-          :note-notation-labels="noteNotationLabels"
-          :repo-url="repoUrl"
-          :app-version="appVersion"
-          :stop-label="t.stop"
-          :is-listening="isListening"
-          :sound-settings-label="t.soundSettings"
-          :sound-presets="pianoSamplePresets"
-          :sound-preset-labels="t.soundPresets"
-          :sound-description="t.soundDescription"
-          :sound-loading-label="t.soundLoading"
-          :selected-piano-preset-id="selectedPianoPresetId"
-          :is-piano-sampler-loading="isPianoSamplerLoading"
-          @set-language="setLanguage"
-          @set-note-notation="setNoteNotation"
-          @stop="stopListening"
-          @set-piano-sample-preset="selectPianoSamplePreset"
-        />
 
         <VolumeMeter :label="t.volume" :active-steps="volumeSteps" />
 
@@ -394,7 +395,7 @@ button {
 }
 
 .tuner {
-  --tuner-padding: clamp(22px, 5vw, 42px);
+  --tuner-padding: clamp(10px, 5vw, 20px);
 
   position: relative;
   width: 100%;
@@ -449,7 +450,7 @@ button {
   }
 
   .tuner-content {
-    padding-bottom: 120px;
+    padding-bottom: 80px;
   }
 }
 </style>

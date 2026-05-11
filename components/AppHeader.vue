@@ -181,7 +181,6 @@ onBeforeUnmount(() => {
   align-items: flex-end;
   gap: 0;
   width: max-content;
-  max-width: 50vw;
 }
 
 .controls-row {
@@ -189,7 +188,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   width: max-content;
-  max-width: 50vw;
 }
 
 .eyebrow {
@@ -224,7 +222,7 @@ h1 {
   border: 0;
   border-left: 1px solid rgba(23, 32, 29, 0.12);
   border-bottom: 1px solid rgba(23, 32, 29, 0.12);
-  border-radius: 0 8px 0 8px;
+  border-radius: 0;
   background: rgba(23, 32, 29, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
@@ -446,14 +444,12 @@ h1 {
     right: calc(var(--tuner-padding) * -1);
     bottom: auto;
     width: max-content;
-    max-width: 50vw;
     align-items: stretch;
     justify-content: flex-end;
   }
 
   .controls-row {
     width: max-content;
-    max-width: 50vw;
   }
 
   .language-switch {

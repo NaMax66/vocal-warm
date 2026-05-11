@@ -21,7 +21,7 @@ defineProps<{
   align-items: center;
   justify-content: center;
   height: 74px;
-  margin: 22px 0;
+  margin-bottom: 20px;
   color: #52615c;
 }
 
@@ -125,7 +125,7 @@ defineProps<{
 @media (max-width: 560px) {
   .tuning-meter {
     height: 58px;
-    margin: 12px 6px;
+    margin: 30px 6px;
   }
 
   .rail {

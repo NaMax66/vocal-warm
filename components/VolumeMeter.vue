@@ -32,11 +32,11 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
   width: min(50%, 420px);
   min-height: 30px;
   display: grid;
-  margin: 18px auto 0;
+  margin: 100px auto 0;
 }
 
 .volume-steps {
-  height: 30px;
+  height: 100px;
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   align-items: end;
@@ -69,11 +69,11 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
   .volume {
     width: min(76%, 320px);
     min-height: 22px;
-    margin-top: 8px;
+    margin-top: 100px;
   }
 
   .volume-steps {
-    height: 22px;
+    height: 80px;
   }
 }
 </style>

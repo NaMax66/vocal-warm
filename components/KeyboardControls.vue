@@ -135,6 +135,10 @@ defineEmits<{
 }
 
 @media (max-width: 560px) {
+  .space-label {
+    display: none;
+  }
+
   .keyboard-control-pad {
     position: fixed;
     right: 5px;

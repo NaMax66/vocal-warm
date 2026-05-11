@@ -19,7 +19,7 @@ defineProps<{
   display: flex;
   align-items: baseline;
   justify-content: center;
-  margin: 18px 0 16px;
+  margin-top: 18px;
   color: #162c39;
   overflow: hidden;
   opacity: 0;
