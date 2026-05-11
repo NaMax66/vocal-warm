@@ -37,6 +37,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `isPianoSamplerLoading` drives the gear spinner and loading label.
 - Short taps should keep a note active for at least about `0.5s`; release is also `0.5s`.
 - `pressedMidi` highlighting is delayed to match the short-tap minimum duration.
+- When Space is held and the selected note changes with arrows, the previous note should release immediately and the next selected note should start immediately.
 - Voice-detected keyboard highlighting should fade in smoothly but disappear immediately when the detected note changes or drops. Manual `pressedMidi` key highlighting should keep smooth transitions both ways.
 
 ## UI Behavior

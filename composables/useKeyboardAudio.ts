@@ -141,7 +141,7 @@ export function useKeyboardAudio() {
       return
     }
 
-    await stopKeyboardNote()
+    await stopKeyboardNote(activeKeyboardNote, { immediate: true })
     clearPendingPressedMidi()
     pressedMidi.value = midi
     activeKeyboardNote = noteName
@@ -158,7 +158,7 @@ export function useKeyboardAudio() {
     instrument.triggerAttack(noteName)
   }
 
-  async function stopKeyboardNote(noteName = activeKeyboardNote) {
+  async function stopKeyboardNote(noteName = activeKeyboardNote, options: { immediate?: boolean } = {}) {
     if (!noteName) {
       return
     }
@@ -166,7 +166,9 @@ export function useKeyboardAudio() {
     const isActiveNote = activeKeyboardNote === noteName
     const releasedMidi = isActiveNote ? activeKeyboardMidi : null
     const releaseDelayMs = isActiveNote
-      ? Math.max(0, 500 - (performance.now() - activeKeyboardNoteStartedAt))
+      ? options.immediate
+        ? 0
+        : Math.max(0, 500 - (performance.now() - activeKeyboardNoteStartedAt))
       : 0
 
     if (releaseTimeoutId) {
