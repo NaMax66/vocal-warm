@@ -54,6 +54,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `TuningMeter.vue` is an aircraft-navigation-style pitch monitor: one horizontal rail, a 25vw moving section that shifts very smoothly up/down from cents offset, and the whole rail glows green when aligned within about `10` cents. Do not restore numeric `-50/+50` labels or the old vertical needle meter.
 - Pitch monitor tuning constants live in `app.vue`: `pitchMeterMaxOffsetPx` controls vertical travel from center, `pitchMeterSmoothnessMs` controls movement duration, and `pitchMeterGreenZoneCents` controls the centered green zone. The exact center is `0` cents from the nearest exact note; between notes is around `+/-50` cents and should be visually away from center.
 - Button text selection is disabled globally.
+- Mobile viewport scaling is disabled with `maximum-scale=1, user-scalable=no`.
 
 ## Local Storage
 
