@@ -55,6 +55,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Pitch monitor tuning constants live in `app.vue`: `pitchMeterMaxOffsetPx` controls vertical travel from center, `pitchMeterSmoothnessMs` controls movement duration, and `pitchMeterGreenZoneCents` controls the centered green zone. The exact center is `0` cents from the nearest exact note; between notes is around `+/-50` cents and should be visually away from center.
 - Button text selection is disabled globally.
 - Mobile viewport scaling is disabled with `maximum-scale=1, user-scalable=no`.
+- Mobile long-press browser effects are suppressed on note/control buttons with `touch-action`, disabled callout, transparent tap highlight, and prevented context menus where notes are held.
 
 ## Local Storage
 

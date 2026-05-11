@@ -135,6 +135,7 @@ onBeforeUnmount(() => {
           @pointerup="endNote(key.soundLabel, key.midi)"
           @pointercancel="endNote(key.soundLabel, key.midi)"
           @pointerleave="endNote(key.soundLabel, key.midi)"
+          @contextmenu.prevent
           @keydown.space.prevent="startNote(key.soundLabel, key.midi)"
           @keyup.space.prevent="endNote(key.soundLabel, key.midi)"
         >
@@ -162,6 +163,7 @@ onBeforeUnmount(() => {
           @pointerup="endNote(key.soundLabel, key.midi)"
           @pointercancel="endNote(key.soundLabel, key.midi)"
           @pointerleave="endNote(key.soundLabel, key.midi)"
+          @contextmenu.prevent
           @keydown.space.prevent="startNote(key.soundLabel, key.midi)"
           @keyup.space.prevent="endNote(key.soundLabel, key.midi)"
         >
@@ -215,6 +217,7 @@ onBeforeUnmount(() => {
   border: 0;
   cursor: pointer;
   letter-spacing: 0;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background 500ms ease,
     box-shadow 500ms ease,

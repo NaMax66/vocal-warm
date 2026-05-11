@@ -32,6 +32,7 @@ defineEmits<{
         @pointerup="$emit('releaseSelectedNote')"
         @pointercancel="$emit('releaseSelectedNote')"
         @pointerleave="$emit('releaseSelectedNote')"
+        @contextmenu.prevent
         @keydown.space.prevent="$emit('holdSelectedNote')"
         @keyup.space.prevent="$emit('releaseSelectedNote')"
         @blur="$emit('releaseSelectedNote')"
@@ -80,6 +81,7 @@ defineEmits<{
     0 8px 20px rgba(31, 41, 37, 0.08);
   cursor: pointer;
   font-weight: 900;
+  -webkit-tap-highlight-color: transparent;
   transition:
     transform 140ms ease,
     background 140ms ease,
