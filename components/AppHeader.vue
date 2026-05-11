@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import type { Language } from '~/utils/i18n'
+import type { NoteNotation } from '~/composables/useNoteMath'
 import type { PianoSamplePresetId } from '~/utils/pianoSamples'
 
 defineProps<{
   title: string
   language: Language
   languages: readonly Language[]
+  noteNotation: NoteNotation
+  noteNotations: readonly NoteNotation[]
+  noteNotationLabels: Record<NoteNotation, string>
   stopLabel: string
   isListening: boolean
   soundSettingsLabel: string
@@ -19,6 +23,7 @@ defineProps<{
 
 defineEmits<{
   setLanguage: [language: Language]
+  setNoteNotation: [notation: NoteNotation]
   stop: []
   setPianoSamplePreset: [presetId: PianoSamplePresetId]
 }>()
@@ -64,6 +69,19 @@ onBeforeUnmount(() => {
             @click="$emit('setLanguage', nextLanguage)"
           >
             {{ nextLanguage.toUpperCase() }}
+          </button>
+        </div>
+
+        <div class="notation-switch" aria-label="Note notation">
+          <button
+            v-for="nextNotation in noteNotations"
+            :key="nextNotation"
+            type="button"
+            :class="{ active: noteNotation === nextNotation }"
+            :aria-pressed="noteNotation === nextNotation"
+            @click="$emit('setNoteNotation', nextNotation)"
+          >
+            {{ noteNotationLabels[nextNotation] }}
           </button>
         </div>
 
@@ -159,9 +177,10 @@ h1 {
   letter-spacing: 0;
 }
 
-.language-switch {
+.language-switch,
+.notation-switch {
   display: inline-grid;
-  flex: 1 1 96px;
+  flex: 0 0 96px;
   width: 96px;
   max-width: 100%;
   min-height: 42px;
@@ -176,12 +195,18 @@ h1 {
     0 8px 20px rgba(31, 41, 37, 0.08);
 }
 
-.language-switch {
+.language-switch,
+.notation-switch {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   min-height: 48px;
 }
 
-.language-switch button {
+.notation-switch {
+  border-radius: 0;
+}
+
+.language-switch button,
+.notation-switch button {
   border: 0;
   border-radius: 6px;
   color: #52615c;
@@ -191,7 +216,8 @@ h1 {
   font-weight: 850;
 }
 
-.language-switch button.active {
+.language-switch button.active,
+.notation-switch button.active {
   color: #17201d;
   background: #fffaf0;
   box-shadow: 0 4px 14px rgba(31, 41, 37, 0.13);
@@ -354,10 +380,15 @@ h1 {
   }
 
   .language-switch {
-    width: 50vw;
+    width: 25vw;
   }
 
-  .language-switch {
+  .notation-switch {
+    width: 25vw;
+  }
+
+  .language-switch,
+  .notation-switch {
     grid-template-columns: repeat(2, 1fr);
   }
 }

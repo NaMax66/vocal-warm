@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { keyboardMaxMidi, keyboardMinMidi, noteNames } from '~/composables/useNoteMath'
+import {
+  keyboardMaxMidi,
+  keyboardMinMidi,
+  midiToDisplayNoteName,
+  midiToNoteName,
+  noteNames,
+  type NoteNotation
+} from '~/composables/useNoteMath'
 
 const props = defineProps<{
   detectedMidi: number | null
   pressedMidi: number | null
   selectedMidi: number
+  noteNotation: NoteNotation
   label: string
 }>()
 
@@ -58,7 +66,8 @@ const pianoKeys = computed(() => {
     return {
       midi,
       noteName,
-      label: `${noteName}${Math.floor(midi / 12) - 1}`,
+      soundLabel: midiToNoteName(midi),
+      displayLabel: midiToDisplayNoteName(midi, props.noteNotation),
       isBlack,
       afterWhiteCount,
       isDetected: props.detectedMidi === midi,
@@ -120,16 +129,16 @@ onBeforeUnmount(() => {
             combined: key.isCombined,
             'voice-release': key.isVoiceRelease
           }"
-          :aria-label="key.label"
+          :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
-          @pointerdown.prevent="startNote(key.label, key.midi)"
-          @pointerup="endNote(key.label, key.midi)"
-          @pointercancel="endNote(key.label, key.midi)"
-          @pointerleave="endNote(key.label, key.midi)"
-          @keydown.space.prevent="startNote(key.label, key.midi)"
-          @keyup.space.prevent="endNote(key.label, key.midi)"
+          @pointerdown.prevent="startNote(key.soundLabel, key.midi)"
+          @pointerup="endNote(key.soundLabel, key.midi)"
+          @pointercancel="endNote(key.soundLabel, key.midi)"
+          @pointerleave="endNote(key.soundLabel, key.midi)"
+          @keydown.space.prevent="startNote(key.soundLabel, key.midi)"
+          @keyup.space.prevent="endNote(key.soundLabel, key.midi)"
         >
-          <span>{{ key.label }}</span>
+          <span>{{ key.displayLabel }}</span>
         </button>
       </div>
 
@@ -147,16 +156,16 @@ onBeforeUnmount(() => {
             'voice-release': key.isVoiceRelease
           }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
-          :aria-label="key.label"
+          :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
-          @pointerdown.prevent="startNote(key.label, key.midi)"
-          @pointerup="endNote(key.label, key.midi)"
-          @pointercancel="endNote(key.label, key.midi)"
-          @pointerleave="endNote(key.label, key.midi)"
-          @keydown.space.prevent="startNote(key.label, key.midi)"
-          @keyup.space.prevent="endNote(key.label, key.midi)"
+          @pointerdown.prevent="startNote(key.soundLabel, key.midi)"
+          @pointerup="endNote(key.soundLabel, key.midi)"
+          @pointercancel="endNote(key.soundLabel, key.midi)"
+          @pointerleave="endNote(key.soundLabel, key.midi)"
+          @keydown.space.prevent="startNote(key.soundLabel, key.midi)"
+          @keyup.space.prevent="endNote(key.soundLabel, key.midi)"
         >
-          <span>{{ key.label }}</span>
+          <span>{{ key.displayLabel }}</span>
         </button>
       </div>
     </div>

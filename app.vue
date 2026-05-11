@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { copy, supportedLanguages, type Language } from '~/utils/i18n'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
-import { keyboardMaxMidi, keyboardMinMidi, midiToNoteName } from '~/composables/useNoteMath'
+import {
+  keyboardMaxMidi,
+  keyboardMinMidi,
+  midiToDisplayNoteName,
+  midiToNoteName,
+  noteNameToDisplayName,
+  noteNotationLabels,
+  noteNotations,
+  type NoteNotation
+} from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
 import { isPianoSamplePresetId, type PianoSamplePresetId } from '~/utils/pianoSamples'
 
 const language = ref<Language>('en')
+const noteNotation = ref<NoteNotation>('letter')
 const selectedMidi = ref(60)
 const isSliderHolding = ref(false)
 const runtimeConfig = useRuntimeConfig()
@@ -42,6 +52,10 @@ const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const status = computed(() => t.value.status[statusKey.value])
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
+const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
+const displayNote = computed(() => (
+  note.value === '--' ? note.value : noteNameToDisplayName(note.value, noteNotation.value)
+))
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 500
 const pitchMeterGreenZoneCents = 10
@@ -74,6 +88,11 @@ function resolveLanguage(browserLanguage: string | undefined): Language {
 function setLanguage(nextLanguage: Language) {
   language.value = nextLanguage
   localStorage.setItem('vocalwarm-language', nextLanguage)
+}
+
+function setNoteNotation(nextNotation: NoteNotation) {
+  noteNotation.value = nextNotation
+  localStorage.setItem('vocalwarm-note-notation', nextNotation)
 }
 
 async function selectPianoSamplePreset(presetId: PianoSamplePresetId) {
@@ -159,6 +178,11 @@ onMounted(() => {
     ? savedLanguage
     : resolveLanguage(navigator.language)
 
+  const savedNoteNotation = localStorage.getItem('vocalwarm-note-notation') as NoteNotation | null
+  if (savedNoteNotation && noteNotations.includes(savedNoteNotation)) {
+    noteNotation.value = savedNoteNotation
+  }
+
   const savedPianoPresetId = localStorage.getItem('vocalwarm-piano-preset')
   if (isPianoSamplePresetId(savedPianoPresetId)) {
     restorePianoSamplePreset(savedPianoPresetId)
@@ -200,6 +224,9 @@ onBeforeUnmount(() => {
           :title="t.title"
           :language="language"
           :languages="supportedLanguages"
+          :note-notation="noteNotation"
+          :note-notations="noteNotations"
+          :note-notation-labels="noteNotationLabels"
           :stop-label="t.stop"
           :is-listening="isListening"
           :sound-settings-label="t.soundSettings"
@@ -210,6 +237,7 @@ onBeforeUnmount(() => {
           :selected-piano-preset-id="selectedPianoPresetId"
           :is-piano-sampler-loading="isPianoSamplerLoading"
           @set-language="setLanguage"
+          @set-note-notation="setNoteNotation"
           @stop="stopListening"
           @set-piano-sample-preset="selectPianoSamplePreset"
         />
@@ -217,7 +245,7 @@ onBeforeUnmount(() => {
         <VolumeMeter :label="t.volume" :status="status" :active-steps="volumeSteps" />
 
         <PitchReadout
-          :note="note"
+          :note="displayNote"
           :octave="octave"
         />
 
@@ -227,6 +255,7 @@ onBeforeUnmount(() => {
           :detected-midi="activeMidi"
           :pressed-midi="pressedMidi"
           :selected-midi="selectedMidi"
+          :note-notation="noteNotation"
           :label="t.keyboardLabel"
           @note-start="startKeyboardNote"
           @note-end="stopKeyboardNote"
@@ -235,7 +264,7 @@ onBeforeUnmount(() => {
         <KeyboardControls
           :keyboard-label="t.keyboardControl"
           :selected-note-text="t.selectedNote"
-          :selected-note-label="selectedNoteLabel"
+          :selected-note-label="selectedDisplayNoteLabel"
           @step-selected-midi="stepSelectedMidi"
           @hold-selected-note="holdSelectedNote"
           @release-selected-note="releaseSelectedNote"

@@ -43,6 +43,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Interface language defaults from browser language: RU for `ru-*`, EN otherwise.
 - Language switch is in the top-right control cluster.
+- Note notation switch is next to language and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
 - Sound preset gear sits under the `Stop` button, near the right edge.
 - Sound menu includes a short explanation of velocity layers and closes on outside click.
 - The selected keyboard note has a small red ASCII `x` marker. Use ASCII here to avoid encoding weirdness in shell output.
@@ -57,6 +58,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Local Storage
 
 - `vocalwarm-language`: selected UI language.
+- `vocalwarm-note-notation`: selected note notation (`letter` or `solfege`).
 - `vocalwarm-piano-preset`: selected piano sample preset.
 - `vocalwarm-selected-midi`: selected note for Space / arrow controls.
 - `vocalwarm-keyboard-scroll-left`: horizontal scroll position of the piano keyboard.
