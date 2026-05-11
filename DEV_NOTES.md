@@ -7,6 +7,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Project folder: `C:\Users\maxim\Documents\Codex\VocalWarm`
 - Dev URL: `http://127.0.0.1:3000/`
 - Do not run `npm run build` unless the user explicitly asks.
+- Dev-only layout hack: set `NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK=1` to fall back after microphone permission denial. Always try the real microphone first; only start the fake stable `C4` active session if mic startup fails, so normal browsers with mic access still use real input. Runtime config may expose the flag as number `1` or string `'1'`; treat both as enabled. Keep it off outside local layout work.
 - Prefer small, direct Vue/Nuxt changes that match the existing component style.
 
 ## Current Structure
@@ -46,6 +47,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Language switch is in the top-right control cluster.
 - App name, version, and repo link live in an `i` info popover styled like the sound settings popover.
 - The large brand/title header is visible before listening starts, then hidden during the active singing UI.
+- Start overlay is intentionally clickable as a whole, with the topbar above it, so in-app browser clicks can start the dev mic-ban layout hack reliably.
 - Note notation switch is next to language and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
 - Sound preset gear sits under the `Stop` button, near the right edge.
 - Sound menu includes a short explanation of velocity layers and closes on outside click.

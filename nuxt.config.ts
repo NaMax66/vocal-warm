@@ -17,7 +17,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   runtimeConfig: {
     public: {
-      appVersion
+      appVersion,
+      micBanLayoutHack: process.env.NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK === '1' ? '1' : '0'
     }
   },
   app: {

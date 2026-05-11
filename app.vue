@@ -30,6 +30,7 @@ const {
   volume,
   errorMessage,
   startListening: startPitchListening,
+  startMicBanLayoutHack,
   stopListening
 } = usePitchDetector()
 
@@ -48,6 +49,7 @@ const {
 
 const t = computed(() => copy[language.value])
 const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
+const isMicBanLayoutHackEnabled = computed(() => String(runtimeConfig.public.micBanLayoutHack) === '1')
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
@@ -169,6 +171,10 @@ async function releaseSelectedNote() {
 
 async function startListening() {
   await startPitchListening(t.value.micError, preloadPianoSampler)
+
+  if (isMicBanLayoutHackEnabled.value && !isListening.value) {
+    startMicBanLayoutHack(preloadPianoSampler)
+  }
 }
 
 function handleGlobalKeydown(event: KeyboardEvent) {
@@ -415,7 +421,7 @@ button {
 }
 
 .tuner.inactive .topbar {
-  z-index: 70;
+  z-index: 90;
 }
 
 .tuner-content {

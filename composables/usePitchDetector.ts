@@ -18,6 +18,7 @@ export function usePitchDetector() {
   let stream: MediaStream | null = null
   let animationId = 0
   let sampleBuffer: Float32Array | null = null
+  let micBanLayoutHackIntervalId: ReturnType<typeof setInterval> | null = null
 
   function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     let rms = 0
@@ -149,8 +150,27 @@ export function usePitchDetector() {
     }
   }
 
+  function startMicBanLayoutHack(onStarted?: () => void) {
+    stopListening()
+    errorMessage.value = ''
+    isListening.value = true
+    statusKey.value = 'listening'
+    updateNoteFromFrequency(midiToFrequency(60))
+    volume.value = 0.28
+    onStarted?.()
+
+    micBanLayoutHackIntervalId = setInterval(() => {
+      updateNoteFromFrequency(midiToFrequency(60))
+      volume.value = volume.value > 0.38 ? 0.22 : volume.value + 0.04
+    }, 700)
+  }
+
   function stopListening() {
     cancelAnimationFrame(animationId)
+    if (micBanLayoutHackIntervalId) {
+      clearInterval(micBanLayoutHackIntervalId)
+      micBanLayoutHackIntervalId = null
+    }
     source?.disconnect()
     stream?.getTracks().forEach((track) => track.stop())
     audioContext?.close()
@@ -181,6 +201,7 @@ export function usePitchDetector() {
     volume,
     errorMessage,
     startListening,
+    startMicBanLayoutHack,
     stopListening
   }
 }

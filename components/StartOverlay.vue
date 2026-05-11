@@ -11,9 +11,9 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="start-overlay">
+  <div class="start-overlay" @click.stop="$emit('start')">
     <span class="overlay-kicker">{{ kicker }}</span>
-    <button class="overlay-action" type="button" @click.stop="$emit('start')">
+    <button class="overlay-action" type="button" @pointerdown.stop @click.stop="$emit('start')">
       {{ action }}
     </button>
     <span class="overlay-hint">{{ hint }}</span>
@@ -23,7 +23,7 @@ defineEmits<{
 <style scoped>
 .start-overlay {
   position: absolute;
-  z-index: 60;
+  z-index: 80;
   inset: 0;
   display: flex;
   flex-direction: column;
@@ -88,6 +88,7 @@ defineEmits<{
   color: #fffaf0;
   background: #d74f2a;
   cursor: pointer;
+  pointer-events: auto;
   box-shadow:
     0 18px 60px rgba(215, 79, 42, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
