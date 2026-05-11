@@ -58,6 +58,8 @@ const stableDisplayNote = computed(() => (
 ))
 const isPitchReadoutVisible = ref(false)
 let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
+let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
+const pitchReadoutGraceMs = 900
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 500
 const pitchMeterGreenZoneCents = 10
@@ -90,6 +92,26 @@ function clearStableNoteTimeout() {
 
   clearTimeout(stableNoteTimeoutId)
   stableNoteTimeoutId = null
+}
+
+function clearStableNoteHideTimeout() {
+  if (!stableNoteHideTimeoutId) {
+    return
+  }
+
+  clearTimeout(stableNoteHideTimeoutId)
+  stableNoteHideTimeoutId = null
+}
+
+function hideStableNoteAfterGrace() {
+  clearStableNoteHideTimeout()
+
+  stableNoteHideTimeoutId = setTimeout(() => {
+    isPitchReadoutVisible.value = false
+    stableNote.value = '--'
+    stableOctave.value = ''
+    stableNoteHideTimeoutId = null
+  }, pitchReadoutGraceMs)
 }
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
@@ -185,19 +207,26 @@ function handleGlobalKeyup(event: KeyboardEvent) {
 
 watch([note, octave], ([nextNote, nextOctave]) => {
   clearStableNoteTimeout()
-  isPitchReadoutVisible.value = false
 
   if (nextNote === '--' || !nextOctave) {
-    stableNote.value = '--'
-    stableOctave.value = ''
+    hideStableNoteAfterGrace()
     return
   }
+
+  if (nextNote === stableNote.value && nextOctave === stableOctave.value) {
+    clearStableNoteHideTimeout()
+    isPitchReadoutVisible.value = true
+    return
+  }
+
+  hideStableNoteAfterGrace()
 
   stableNoteTimeoutId = setTimeout(() => {
     if (note.value !== nextNote || octave.value !== nextOctave) {
       return
     }
 
+    clearStableNoteHideTimeout()
     stableNote.value = nextNote
     stableOctave.value = nextOctave
     isPitchReadoutVisible.value = true
@@ -245,6 +274,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('keyup', handleGlobalKeyup)
   clearStableNoteTimeout()
+  clearStableNoteHideTimeout()
   disposeKeyboardAudio()
   stopListening()
 })
@@ -253,7 +283,7 @@ onBeforeUnmount(() => {
 <template>
   <main class="page-shell">
     <section class="tuner" :class="{ inactive: !isListening }">
-      <div class="tuner-content" :inert="!isListening" :aria-hidden="!isListening">
+      <div class="tuner-content">
         <AppHeader
           :title="t.title"
           :language="language"
@@ -385,11 +415,6 @@ button {
 }
 
 .tuner.inactive .topbar {
-  z-index: auto;
-}
-
-.tuner.inactive .topbar > :first-child {
-  position: relative;
   z-index: 70;
 }
 

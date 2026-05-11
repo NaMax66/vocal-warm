@@ -31,40 +31,61 @@ defineEmits<{
 }>()
 
 const isSoundMenuOpen = ref(false)
+const isInfoMenuOpen = ref(false)
 const soundMenu = ref<HTMLElement | null>(null)
+const infoMenu = ref<HTMLElement | null>(null)
 
-function closeSoundMenuOnOutsideClick(event: PointerEvent) {
-  if (!soundMenu.value || soundMenu.value.contains(event.target as Node)) {
-    return
+function closeMenusOnOutsideClick(event: PointerEvent) {
+  const target = event.target as Node
+
+  if (soundMenu.value && !soundMenu.value.contains(target)) {
+    isSoundMenuOpen.value = false
   }
 
-  isSoundMenuOpen.value = false
+  if (infoMenu.value && !infoMenu.value.contains(target)) {
+    isInfoMenuOpen.value = false
+  }
 }
 
 onMounted(() => {
-  document.addEventListener('pointerdown', closeSoundMenuOnOutsideClick)
+  document.addEventListener('pointerdown', closeMenusOnOutsideClick)
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', closeSoundMenuOnOutsideClick)
+  document.removeEventListener('pointerdown', closeMenusOnOutsideClick)
 })
 </script>
 
 <template>
-  <div class="topbar">
-    <div>
+  <div class="topbar" :class="{ listening: isListening }">
+    <div v-if="!isListening" class="brand-header">
       <p class="eyebrow">
         <span>VocalWarm</span>
       </p>
-      <div class="mini-header">
-        <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
-        <span>{{ appVersion }}</span>
-      </div>
       <h1>{{ title }}</h1>
     </div>
 
     <div class="controls">
       <div class="controls-row">
+        <div ref="infoMenu" class="info-menu">
+          <button
+            class="icon-button"
+            type="button"
+            aria-label="Application information"
+            :aria-expanded="isInfoMenuOpen"
+            @click="isInfoMenuOpen = !isInfoMenuOpen"
+          >
+            <span aria-hidden="true">i</span>
+          </button>
+
+          <div v-if="isInfoMenuOpen" class="menu-popover info-popover" aria-label="Application information">
+            <strong>VocalWarm</strong>
+            <span>{{ title }}</span>
+            <span>{{ appVersion }}</span>
+            <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
+          </div>
+        </div>
+
         <div class="language-switch" aria-label="Interface language">
           <button
             v-for="nextLanguage in languages"
@@ -98,7 +119,7 @@ onBeforeUnmount(() => {
 
       <div v-if="isListening" ref="soundMenu" class="sound-menu">
         <button
-          class="sound-button"
+          class="icon-button sound-button"
           :class="{ loading: isPianoSamplerLoading }"
           type="button"
           :aria-label="soundSettingsLabel"
@@ -112,7 +133,7 @@ onBeforeUnmount(() => {
           {{ soundLoadingLabel }}
         </span>
 
-        <div v-if="isSoundMenuOpen" class="sound-options" :aria-label="soundSettingsLabel">
+        <div v-if="isSoundMenuOpen" class="menu-popover sound-options" :aria-label="soundSettingsLabel">
           <p>{{ soundDescription }}</p>
 
           <button
@@ -140,6 +161,15 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 3;
   min-height: 152px;
+}
+
+.topbar.listening {
+  min-height: 0;
+}
+
+.brand-header {
+  position: relative;
+  z-index: 70;
 }
 
 .controls {
@@ -173,33 +203,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
-}
-
-.mini-header {
-  display: inline-flex;
-  align-items: center;
-  width: max-content;
-  max-width: 100%;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding: 5px 8px;
-  border: 1px solid rgba(23, 32, 29, 0.1);
-  border-radius: 6px;
-  color: rgba(82, 97, 92, 0.7);
-  background: rgba(255, 250, 240, 0.72);
-  font-size: 0.68rem;
-  font-weight: 850;
-  line-height: 1;
-}
-
-.mini-header a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.mini-header a:hover {
-  color: #17201d;
-  text-decoration: underline;
 }
 
 h1 {
@@ -276,19 +279,20 @@ h1 {
   transform: translateY(-1px);
 }
 
+.info-menu,
 .sound-menu {
   position: relative;
   display: grid;
   justify-items: end;
 }
 
-.sound-button {
+.icon-button {
   display: grid;
   place-items: center;
   width: 34px;
-  height: 32px;
+  height: 48px;
   border: 0;
-  border-radius: 0 0 0 8px;
+  border-radius: 0;
   color: #17201d;
   background: rgba(255, 250, 240, 0.94);
   box-shadow:
@@ -299,19 +303,31 @@ h1 {
   line-height: 1;
 }
 
-.sound-button:hover,
-.sound-button:focus-visible {
+.info-menu .icon-button {
+  border-radius: 0 0 0 8px;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.sound-menu .icon-button {
+  width: 34px;
+  height: 32px;
+  border-radius: 0 0 0 8px;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
   color: #fffaf0;
   background: #277a73;
   outline: 0;
 }
 
-.sound-button.loading {
+.icon-button.loading {
   color: #fffaf0;
   background: #277a73;
 }
 
-.sound-button.loading span {
+.icon-button.loading span {
   animation: sound-spin 900ms linear infinite;
 }
 
@@ -331,7 +347,7 @@ h1 {
   line-height: 1;
 }
 
-.sound-options {
+.menu-popover {
   position: absolute;
   top: 36px;
   right: 0;
@@ -343,6 +359,30 @@ h1 {
   border-radius: 8px 0 8px 8px;
   background: rgba(255, 252, 244, 0.98);
   box-shadow: 0 14px 34px rgba(31, 41, 37, 0.18);
+}
+
+.info-popover {
+  top: 52px;
+  min-width: 168px;
+  gap: 6px;
+  color: #52615c;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.info-popover strong {
+  color: #17201d;
+  font-size: 0.9rem;
+}
+
+.info-popover a {
+  color: #277a73;
+  text-decoration: none;
+}
+
+.info-popover a:hover {
+  text-decoration: underline;
 }
 
 .sound-options p {
@@ -390,15 +430,15 @@ h1 {
     min-height: 118px;
   }
 
+  .topbar.listening {
+    min-height: 0;
+  }
+
   h1 {
     margin-top: 12px;
     padding: 0 8px;
     text-align: center;
     font-size: clamp(2.1rem, 13vw, 3.2rem);
-  }
-
-  .mini-header {
-    margin-left: 8px;
   }
 
   .controls {

@@ -59,6 +59,8 @@ defineEmits<{
   z-index: 3;
   display: grid;
   gap: 8px;
+  width: 100%;
+  place-items: center;
   justify-items: center;
   margin: -8px auto 22px;
 }
