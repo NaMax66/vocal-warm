@@ -42,24 +42,30 @@ const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const status = computed(() => t.value.status[statusKey.value])
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
-
-const centsLabel = computed(() => {
-  if (!frequency.value) {
-    return ''
-  }
-
-  if (Math.abs(cents.value) <= 5) {
-    return t.value.inTune
-  }
-
-  return cents.value > 0 ? t.value.sharp(cents.value) : t.value.flat(Math.abs(cents.value))
-})
+const pitchMeterMaxOffsetPx = 24
+const pitchMeterSmoothnessMs = 500
+const pitchMeterGreenZoneCents = 10
+const pitchMeterCentsRange = 50
+const pitchMeterOffsetCents = computed(() => Math.max(
+  -pitchMeterCentsRange,
+  Math.min(pitchMeterCentsRange, cents.value)
+))
 
 const meterStyle = computed(() => ({
-  '--needle-offset': `${Math.max(-33.33, Math.min(33.33, (cents.value / 50) * 33.33))}%`
+  '--pitch-offset': `${Math.max(
+    -pitchMeterMaxOffsetPx,
+    Math.min(
+      pitchMeterMaxOffsetPx,
+      (pitchMeterOffsetCents.value / pitchMeterCentsRange) * pitchMeterMaxOffsetPx
+    )
+  )}px`,
+  '--pitch-motion-duration': `${pitchMeterSmoothnessMs}ms`
 }))
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
+const isMeterAligned = computed(() => (
+  Boolean(frequency.value) && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
+))
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
   return browserLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
@@ -213,11 +219,9 @@ onBeforeUnmount(() => {
         <PitchReadout
           :note="note"
           :octave="octave"
-          :frequency="frequency"
-          :cents-label="centsLabel"
         />
 
-        <TuningMeter :label="t.meterLabel" :needle-style="meterStyle" />
+        <TuningMeter :label="t.meterLabel" :meter-style="meterStyle" :is-aligned="isMeterAligned" />
 
         <PianoKeyboard
           :detected-midi="activeMidi"

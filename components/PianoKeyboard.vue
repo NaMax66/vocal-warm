@@ -24,6 +24,23 @@ function endNote(note: string, midi: number) {
 const blackNoteNames = new Set(['C#', 'D#', 'F#', 'G#', 'A#'])
 const keyboardWrap = ref<HTMLElement | null>(null)
 const keyboardScrollStorageKey = 'vocalwarm-keyboard-scroll-left'
+const instantVoiceReleaseMidi = ref<number | null>(null)
+let instantVoiceReleaseFrame = 0
+
+watch(
+  () => props.detectedMidi,
+  (nextMidi, previousMidi) => {
+    if (previousMidi === null || previousMidi === nextMidi) {
+      return
+    }
+
+    cancelAnimationFrame(instantVoiceReleaseFrame)
+    instantVoiceReleaseMidi.value = previousMidi
+    instantVoiceReleaseFrame = requestAnimationFrame(() => {
+      instantVoiceReleaseMidi.value = null
+    })
+  }
+)
 
 const pianoKeys = computed(() => {
   let whiteCount = 0
@@ -47,7 +64,8 @@ const pianoKeys = computed(() => {
       isDetected: props.detectedMidi === midi,
       isPressed: props.pressedMidi === midi,
       isSelected: props.selectedMidi === midi,
-      isCombined: props.detectedMidi === midi && props.pressedMidi === midi
+      isCombined: props.detectedMidi === midi && props.pressedMidi === midi,
+      isVoiceRelease: instantVoiceReleaseMidi.value === midi
     }
   })
 })
@@ -81,6 +99,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  cancelAnimationFrame(instantVoiceReleaseFrame)
   keyboardWrap.value?.removeEventListener('scroll', saveKeyboardScroll)
 })
 </script>
@@ -98,7 +117,8 @@ onBeforeUnmount(() => {
             detected: key.isDetected,
             pressed: key.isPressed,
             selected: key.isSelected,
-            combined: key.isCombined
+            combined: key.isCombined,
+            'voice-release': key.isVoiceRelease
           }"
           :aria-label="key.label"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
@@ -123,7 +143,8 @@ onBeforeUnmount(() => {
             detected: key.isDetected,
             pressed: key.isPressed,
             selected: key.isSelected,
-            combined: key.isCombined
+            combined: key.isCombined,
+            'voice-release': key.isVoiceRelease
           }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
           :aria-label="key.label"
@@ -231,6 +252,10 @@ onBeforeUnmount(() => {
     0 0 0 3px rgba(39, 122, 115, 0.22),
     0 10px 28px rgba(39, 122, 115, 0.3);
   transform: translateY(-2px);
+}
+
+.piano-key.voice-release:not(.pressed):not(.combined) {
+  transition: none;
 }
 
 .piano-key.pressed {

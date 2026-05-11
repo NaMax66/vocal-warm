@@ -2,8 +2,6 @@
 defineProps<{
   note: string
   octave: string
-  frequency: number | null
-  centsLabel: string
 }>()
 </script>
 
@@ -12,21 +10,17 @@ defineProps<{
     <span class="note">{{ note }}</span>
     <span class="octave">{{ octave }}</span>
   </div>
-
-  <div class="frequency-row">
-    <span>{{ frequency ? `${frequency.toFixed(1)} Hz` : '-- Hz' }}</span>
-    <span>{{ centsLabel }}</span>
-  </div>
 </template>
 
 <style scoped>
 .readout {
-  min-height: 160px;
+  height: 170px;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  margin: 18px 0 10px;
+  margin: 18px 0 16px;
   color: #162c39;
+  overflow: hidden;
 }
 
 .note {
@@ -43,20 +37,10 @@ defineProps<{
   font-weight: 850;
 }
 
-.frequency-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  color: #3d4c47;
-  font-size: clamp(1rem, 3vw, 1.25rem);
-  font-weight: 750;
-}
-
 @media (max-width: 560px) {
   .readout {
-    min-height: 90px;
-    margin: 8px 0 6px;
+    height: 104px;
+    margin: 8px 0 10px;
   }
 
   .note {
@@ -66,12 +50,6 @@ defineProps<{
   .octave {
     min-width: 28px;
     font-size: clamp(1.6rem, 9vw, 2.4rem);
-  }
-
-  .frequency-row {
-    gap: 10px;
-    padding: 0 8px;
-    font-size: 0.92rem;
   }
 }
 </style>

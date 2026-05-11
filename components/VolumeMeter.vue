@@ -35,6 +35,7 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 <style scoped>
 .volume {
   width: min(50%, 420px);
+  min-height: 56px;
   display: grid;
   gap: 8px;
   margin: 18px auto 0;
@@ -83,6 +84,7 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 @media (max-width: 560px) {
   .volume {
     width: min(76%, 320px);
+    min-height: 42px;
     margin-top: 8px;
     gap: 5px;
   }
