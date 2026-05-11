@@ -24,8 +24,8 @@ const pianoSampleNotes = [
 ] as const
 
 export const pianoSamplePresets = [
-  { id: 'velocity1', velocity: 1, gainDb: 18 },
-  { id: 'velocity2', velocity: 2, gainDb: 14 },
+  { id: 'velocity1', velocity: 1, gainDb: 14 },
+  { id: 'velocity2', velocity: 2, gainDb: 10 },
   { id: 'velocity8', velocity: 8, gainDb: 8 },
   { id: 'velocity12', velocity: 12, gainDb: 4 },
   { id: 'velocity16', velocity: 16, gainDb: 2 }

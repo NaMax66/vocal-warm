@@ -26,8 +26,8 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
 - Samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
 - Current presets in `utils/pianoSamples.ts`:
-  - `velocity1` / Soft / ru: Myagkie / `+18 dB`
-  - `velocity2` / Light / ru: Legkie / `+14 dB`
+  - `velocity1` / Soft / ru: Myagkie / `+14 dB`
+  - `velocity2` / Light / ru: Legkie / `+10 dB`
   - `velocity8` / Full / ru: Polnye / `+8 dB`
   - `velocity12` / Strong / ru: Silnye / `+4 dB`
   - `velocity16` / Bright / ru: Yarkie / `+2 dB`
