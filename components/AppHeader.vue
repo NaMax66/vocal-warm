@@ -10,6 +10,8 @@ defineProps<{
   noteNotation: NoteNotation
   noteNotations: readonly NoteNotation[]
   noteNotationLabels: Record<NoteNotation, string>
+  repoUrl: string
+  appVersion: string
   stopLabel: string
   isListening: boolean
   soundSettingsLabel: string
@@ -54,6 +56,10 @@ onBeforeUnmount(() => {
       <p class="eyebrow">
         <span>VocalWarm</span>
       </p>
+      <div class="mini-header">
+        <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
+        <span>{{ appVersion }}</span>
+      </div>
       <h1>{{ title }}</h1>
     </div>
 
@@ -167,6 +173,33 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.mini-header {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 5px 8px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-radius: 6px;
+  color: rgba(82, 97, 92, 0.7);
+  background: rgba(255, 250, 240, 0.72);
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.mini-header a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mini-header a:hover {
+  color: #17201d;
+  text-decoration: underline;
 }
 
 h1 {
@@ -358,10 +391,14 @@ h1 {
   }
 
   h1 {
-    margin-top: 28px;
+    margin-top: 12px;
     padding: 0 8px;
     text-align: center;
     font-size: clamp(2.1rem, 13vw, 3.2rem);
+  }
+
+  .mini-header {
+    margin-left: 8px;
   }
 
   .controls {

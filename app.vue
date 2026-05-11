@@ -22,7 +22,6 @@ const runtimeConfig = useRuntimeConfig()
 
 const {
   isListening,
-  statusKey,
   frequency,
   note,
   octave,
@@ -50,12 +49,15 @@ const {
 const t = computed(() => copy[language.value])
 const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
-const status = computed(() => t.value.status[statusKey.value])
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
-const displayNote = computed(() => (
-  note.value === '--' ? note.value : noteNameToDisplayName(note.value, noteNotation.value)
+const stableNote = ref('--')
+const stableOctave = ref('')
+const stableDisplayNote = computed(() => (
+  stableNote.value === '--' ? stableNote.value : noteNameToDisplayName(stableNote.value, noteNotation.value)
 ))
+const isPitchReadoutVisible = ref(false)
+let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 500
 const pitchMeterGreenZoneCents = 10
@@ -80,6 +82,15 @@ const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
 const isMeterAligned = computed(() => (
   Boolean(frequency.value) && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
 ))
+
+function clearStableNoteTimeout() {
+  if (!stableNoteTimeoutId) {
+    return
+  }
+
+  clearTimeout(stableNoteTimeoutId)
+  stableNoteTimeoutId = null
+}
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
   return browserLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
@@ -172,6 +183,28 @@ function handleGlobalKeyup(event: KeyboardEvent) {
   }
 }
 
+watch([note, octave], ([nextNote, nextOctave]) => {
+  clearStableNoteTimeout()
+  isPitchReadoutVisible.value = false
+
+  if (nextNote === '--' || !nextOctave) {
+    stableNote.value = '--'
+    stableOctave.value = ''
+    return
+  }
+
+  stableNoteTimeoutId = setTimeout(() => {
+    if (note.value !== nextNote || octave.value !== nextOctave) {
+      return
+    }
+
+    stableNote.value = nextNote
+    stableOctave.value = nextOctave
+    isPitchReadoutVisible.value = true
+    stableNoteTimeoutId = null
+  }, 3000)
+})
+
 onMounted(() => {
   const savedLanguage = localStorage.getItem('vocalwarm-language') as Language | null
   language.value = savedLanguage && supportedLanguages.includes(savedLanguage)
@@ -211,6 +244,7 @@ useHead(() => ({
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('keyup', handleGlobalKeyup)
+  clearStableNoteTimeout()
   disposeKeyboardAudio()
   stopListening()
 })
@@ -227,6 +261,8 @@ onBeforeUnmount(() => {
           :note-notation="noteNotation"
           :note-notations="noteNotations"
           :note-notation-labels="noteNotationLabels"
+          :repo-url="repoUrl"
+          :app-version="appVersion"
           :stop-label="t.stop"
           :is-listening="isListening"
           :sound-settings-label="t.soundSettings"
@@ -242,11 +278,12 @@ onBeforeUnmount(() => {
           @set-piano-sample-preset="selectPianoSamplePreset"
         />
 
-        <VolumeMeter :label="t.volume" :status="status" :active-steps="volumeSteps" />
+        <VolumeMeter :label="t.volume" :active-steps="volumeSteps" />
 
         <PitchReadout
-          :note="displayNote"
-          :octave="octave"
+          :note="stableDisplayNote"
+          :octave="stableOctave"
+          :is-visible="isPitchReadoutVisible"
         />
 
         <TuningMeter :label="t.meterLabel" :meter-style="meterStyle" :is-aligned="isMeterAligned" />
@@ -281,11 +318,6 @@ onBeforeUnmount(() => {
         @start="startListening"
       />
     </section>
-
-    <footer class="app-footer">
-      <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
-      <span>{{ appVersion }}</span>
-    </footer>
   </main>
 </template>
 
@@ -341,29 +373,6 @@ button {
   overflow: hidden;
 }
 
-.app-footer {
-  position: fixed;
-  right: 8px;
-  bottom: 6px;
-  z-index: 40;
-  display: flex;
-  gap: 6px;
-  color: rgba(82, 97, 92, 0.48);
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.app-footer a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.app-footer a:hover {
-  color: rgba(23, 32, 29, 0.72);
-  text-decoration: underline;
-}
-
 .tuner.inactive .piano-key.black {
   color: rgba(255, 250, 240, 0.28);
   background: rgba(23, 32, 29, 0.56);
@@ -410,10 +419,6 @@ button {
 
   .tuner-content {
     padding-bottom: 120px;
-  }
-
-  .app-footer {
-    bottom: 10px;
   }
 }
 </style>

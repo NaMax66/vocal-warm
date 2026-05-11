@@ -1,7 +1,6 @@
 <script setup lang="ts">
 const props = defineProps<{
   label: string
-  status: string
   activeSteps: number
 }>()
 
@@ -16,11 +15,7 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 </script>
 
 <template>
-  <div class="volume">
-    <div class="volume-label">
-      <span>{{ label }}</span>
-      <span>{{ status }}</span>
-    </div>
+  <div class="volume" :aria-label="label">
     <div class="volume-steps" aria-hidden="true">
       <i
         v-for="step in meterSteps"
@@ -35,20 +30,9 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 <style scoped>
 .volume {
   width: min(50%, 420px);
-  min-height: 56px;
+  min-height: 30px;
   display: grid;
-  gap: 8px;
   margin: 18px auto 0;
-}
-
-.volume-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  color: #5d6964;
-  font-size: 0.74rem;
-  font-weight: 800;
 }
 
 .volume-steps {
@@ -84,9 +68,8 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
 @media (max-width: 560px) {
   .volume {
     width: min(76%, 320px);
-    min-height: 42px;
+    min-height: 22px;
     margin-top: 8px;
-    gap: 5px;
   }
 
   .volume-steps {

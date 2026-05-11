@@ -59,14 +59,17 @@ defineEmits<{
   z-index: 3;
   display: grid;
   gap: 8px;
-  margin: -8px 0 22px;
+  justify-items: center;
+  margin: -8px auto 22px;
 }
 
 .control-buttons {
   display: grid;
-  grid-template-columns: 58px minmax(180px, 1fr) 58px;
+  grid-template-columns: 58px 220px 58px;
   align-items: center;
   gap: 8px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .control-key {
@@ -146,6 +149,7 @@ defineEmits<{
 
   .control-buttons {
     grid-template-columns: 56px minmax(0, 1fr) 56px;
+    width: 100%;
     gap: 8px;
   }
 

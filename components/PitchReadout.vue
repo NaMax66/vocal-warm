@@ -2,11 +2,12 @@
 defineProps<{
   note: string
   octave: string
+  isVisible: boolean
 }>()
 </script>
 
 <template>
-  <div class="readout" aria-live="polite">
+  <div class="readout" :class="{ visible: isVisible }" aria-live="polite">
     <span class="note">{{ note }}</span>
     <span class="octave">{{ octave }}</span>
   </div>
@@ -21,6 +22,13 @@ defineProps<{
   margin: 18px 0 16px;
   color: #162c39;
   overflow: hidden;
+  opacity: 0;
+  transition: none;
+}
+
+.readout.visible {
+  opacity: 1;
+  transition: opacity 640ms ease;
 }
 
 .note {

@@ -44,12 +44,16 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Interface language defaults from browser language: RU for `ru-*`, EN otherwise.
 - Language switch is in the top-right control cluster.
+- Repo link and app version are shown together in a compact mini header near the app title, not stretched full-width on desktop.
 - Note notation switch is next to language and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
 - Sound preset gear sits under the `Stop` button, near the right edge.
 - Sound menu includes a short explanation of velocity layers and closes on outside click.
 - The selected keyboard note has a small red ASCII `x` marker. Use ASCII here to avoid encoding weirdness in shell output.
 - Keyboard key heights were increased about 10%.
+- Keyboard control buttons should stay centered as a compact group on desktop.
 - Mobile control buttons are fixed at the bottom and use taller tap targets.
+- Volume meter has no visible text labels; keep only the bars and an accessibility label.
+- Large pitch note readout appears only after the same detected note remains stable for `3s`, fades in, and disappears immediately on change/drop.
 - The hint text under the arrow/Space controls was intentionally removed.
 - Do not show numeric cents offset in the readout or beside the pitch monitor.
 - `TuningMeter.vue` is an aircraft-navigation-style pitch monitor: one horizontal rail, a 25vw moving section that shifts very smoothly up/down from cents offset, and the whole rail glows green when aligned within about `10` cents. Do not restore numeric `-50/+50` labels or the old vertical needle meter.
