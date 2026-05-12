@@ -80,6 +80,14 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Keep `README.md` and `README.ru.md` in sync with behavior.
 - Current README files document sample presets, localStorage keys, limiter, preload behavior, outside-click menu closing, selected-note marker, short-tap release behavior, and keyboard scroll persistence.
 
+## TODO
+
+- Fix simultaneous piano playback and pitch detection so playing a sample does not break or confuse microphone pitch tracking.
+- Add a service worker / PWA support so the app can work as an installable PWA.
+- Add a debug menu that works in production and can toggle key runtime settings.
+- Add keyboard blocking with clear loading text while piano samples are loading.
+- Make note central showing delay less
+
 ## Verification
 
 - Lightweight checks used so far:
