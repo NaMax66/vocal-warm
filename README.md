@@ -17,12 +17,12 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Microphone capture, autocorrelation pitch detection, detected note state, volume, and tuner status live in `composables/usePitchDetector.ts`.
 - Current screen title in the UI: Russian text meaning "Vocal warmup by notes".
 - Interface language is selected from the browser language on first load: Russian for `ru-*`, English otherwise.
-- Users can switch the interface manually with the `RU` / `EN` buttons; the choice is stored in `localStorage` as `vocalwarm-language`.
+- Users can switch the interface manually from the settings menu; the choice is stored in `localStorage` as `vocalwarm-language`.
 - The app uses the browser Web Audio API and `navigator.mediaDevices.getUserMedia`.
 - Keyboard note playback uses Tone.js (`tone`).
 - Keyboard playback uses Salamander Grand Piano samples through `Tone.Sampler`.
 - Piano samples are loaded from public `@audio-samples/piano-velocity*` packages on jsDelivr.
-- The sound settings gear under the `Stop` button lets users choose the piano velocity layer: `Soft` (`velocity1`, +14 dB), `Light` (`velocity2`, +10 dB), `Full` (`velocity8`, +8 dB), `Strong` (`velocity12`, +4 dB), or `Bright` (`velocity16`, +2 dB).
+- The settings gear between `Stop` and the info button lets users choose language, note notation, and the piano velocity layer: `Soft` (`velocity1`, +14 dB), `Light` (`velocity2`, +10 dB), `Full` (`velocity8`, +8 dB), `Strong` (`velocity12`, +4 dB), or `Bright` (`velocity16`, +2 dB).
 - The selected sample preset is stored in `localStorage` as `vocalwarm-piano-preset`.
 - The default sample preset is `Bright` (`velocity16`) unless a saved user choice exists.
 - Switching sample presets preloads the new sampler immediately and shows a small loading indicator while samples are loading.

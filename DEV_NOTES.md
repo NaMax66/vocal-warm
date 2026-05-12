@@ -13,7 +13,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Current Structure
 
 - `app.vue` wires the screen together and owns top-level UI state.
-- `components/AppHeader.vue` contains language controls, the `Stop` button, and the sound preset gear menu.
+- `components/AppHeader.vue` contains the `Stop` button, a wide settings gear menu for language / note notation / samples, and the info popover.
 - `components/PianoKeyboard.vue` renders the scrollable C2-B6 keyboard.
 - `components/KeyboardControls.vue` renders the fixed mobile/desktop note control buttons.
 - `components/PitchReadout.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback.
@@ -46,13 +46,13 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Interface language defaults from browser language: RU for `ru-*`, EN otherwise.
 - Language switch is in the top-right control cluster.
-- App name, version, and repo link live in an `i` info popover styled like the sound settings popover.
+- App name, version, repo link, and Salamander Grand Piano / CC BY 3.0 sample attribution live in the `i` info popover.
 - The large brand/title header is visible before listening starts, then hidden during the active singing UI.
 - Start overlay is intentionally clickable as a whole, with the topbar above it, so in-app browser clicks can start the dev mic-ban layout hack reliably.
 - If the tab stays hidden for 30 seconds while listening, the app calls `stopListening()` and returns to inactive mode. Returning to the tab before 30 seconds cancels the timeout.
-- Note notation switch is next to language and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
-- Sound preset gear sits under the `Stop` button, near the right edge.
-- Sound menu includes a short explanation of velocity layers and closes on outside click.
+- Note notation switch lives in the settings gear menu and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
+- Settings gear sits between the `Stop` button and the info button near the right edge.
+- Settings menu includes language, notation, a short explanation of velocity layers, and sample preset choices; it closes when clicking outside it.
 - The selected keyboard note has a small red ASCII `x` marker. Use ASCII here to avoid encoding weirdness in shell output.
 - Keyboard key heights were increased about 10%.
 - Keyboard control buttons should stay centered as a compact group on desktop and centered within the fixed mobile pad.

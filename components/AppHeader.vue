@@ -67,9 +67,86 @@ onBeforeUnmount(() => {
 
     <div class="controls">
       <div class="controls-row">
+        <button v-if="isListening" class="listen-button" type="button" @click="$emit('stop')">
+          {{ stopLabel }}
+        </button>
+
+        <div ref="soundMenu" class="settings-menu">
+          <button
+            class="icon-button settings-button"
+            :class="{ loading: isPianoSamplerLoading }"
+            type="button"
+            :aria-label="soundSettingsLabel"
+            :aria-expanded="isSoundMenuOpen"
+            @click="isSoundMenuOpen = !isSoundMenuOpen"
+          >
+            <span aria-hidden="true">&#9881;</span>
+          </button>
+
+          <span v-if="isPianoSamplerLoading" class="sound-loading">
+            {{ soundLoadingLabel }}
+          </span>
+
+          <div v-if="isSoundMenuOpen" class="menu-popover settings-popover" :aria-label="soundSettingsLabel">
+            <section class="settings-section">
+              <h2>{{ language === 'ru' ? 'Язык' : 'Language' }}</h2>
+              <div class="settings-segment" aria-label="Interface language">
+                <button
+                  v-for="nextLanguage in languages"
+                  :key="nextLanguage"
+                  type="button"
+                  :class="{ active: language === nextLanguage }"
+                  :aria-pressed="language === nextLanguage"
+                  @click="$emit('setLanguage', nextLanguage)"
+                >
+                  {{ nextLanguage.toUpperCase() }}
+                </button>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <h2>{{ language === 'ru' ? 'Нотация' : 'Notation' }}</h2>
+              <div class="settings-segment" aria-label="Note notation">
+                <button
+                  v-for="nextNotation in noteNotations"
+                  :key="nextNotation"
+                  type="button"
+                  :class="{ active: noteNotation === nextNotation }"
+                  :aria-pressed="noteNotation === nextNotation"
+                  @click="$emit('setNoteNotation', nextNotation)"
+                >
+                  {{ noteNotationLabels[nextNotation] }}
+                </button>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <h2>{{ soundSettingsLabel }}</h2>
+              <p>{{ soundDescription }}</p>
+
+              <div class="sample-options">
+                <button
+                  v-for="preset in soundPresets"
+                  :key="preset.id"
+                  type="button"
+                  :aria-pressed="selectedPianoPresetId === preset.id"
+                  :class="{ active: selectedPianoPresetId === preset.id }"
+                  :disabled="isPianoSamplerLoading"
+                  @click="
+                    $emit('setPianoSamplePreset', preset.id);
+                    isSoundMenuOpen = true
+                  "
+                >
+                  {{ soundPresetLabels[preset.id] }}
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+
         <div ref="infoMenu" class="info-menu">
           <button
-            class="icon-button"
+            class="icon-button info-button"
             type="button"
             aria-label="Application information"
             :aria-expanded="isInfoMenuOpen"
@@ -82,74 +159,16 @@ onBeforeUnmount(() => {
             <strong>VocalWarm</strong>
             <span>{{ title }}</span>
             <span>{{ appVersion }}</span>
+            <span>
+              {{
+                language === 'ru'
+                  ? 'Сэмплы пианино: Salamander Grand Piano от Alexander Holm, лицензия CC BY 3.0.'
+                  : 'Piano samples: Salamander Grand Piano by Alexander Holm, licensed under CC BY 3.0.'
+              }}
+            </span>
             <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
+            <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>
           </div>
-        </div>
-
-        <div class="language-switch" aria-label="Interface language">
-          <button
-            v-for="nextLanguage in languages"
-            :key="nextLanguage"
-            type="button"
-            :class="{ active: language === nextLanguage }"
-            :aria-pressed="language === nextLanguage"
-            @click="$emit('setLanguage', nextLanguage)"
-          >
-            {{ nextLanguage.toUpperCase() }}
-          </button>
-        </div>
-
-        <div class="notation-switch" aria-label="Note notation">
-          <button
-            v-for="nextNotation in noteNotations"
-            :key="nextNotation"
-            type="button"
-            :class="{ active: noteNotation === nextNotation }"
-            :aria-pressed="noteNotation === nextNotation"
-            @click="$emit('setNoteNotation', nextNotation)"
-          >
-            {{ noteNotationLabels[nextNotation] }}
-          </button>
-        </div>
-
-        <button v-if="isListening" class="listen-button" type="button" @click="$emit('stop')">
-          {{ stopLabel }}
-        </button>
-      </div>
-
-      <div v-if="isListening" ref="soundMenu" class="sound-menu">
-        <button
-          class="icon-button sound-button"
-          :class="{ loading: isPianoSamplerLoading }"
-          type="button"
-          :aria-label="soundSettingsLabel"
-          :aria-expanded="isSoundMenuOpen"
-          @click="isSoundMenuOpen = !isSoundMenuOpen"
-        >
-          <span aria-hidden="true">&#9881;</span>
-        </button>
-
-        <span v-if="isPianoSamplerLoading" class="sound-loading">
-          {{ soundLoadingLabel }}
-        </span>
-
-        <div v-if="isSoundMenuOpen" class="menu-popover sound-options" :aria-label="soundSettingsLabel">
-          <p>{{ soundDescription }}</p>
-
-          <button
-            v-for="preset in soundPresets"
-            :key="preset.id"
-            type="button"
-            :aria-pressed="selectedPianoPresetId === preset.id"
-            :class="{ active: selectedPianoPresetId === preset.id }"
-            :disabled="isPianoSamplerLoading"
-            @click="
-              $emit('setPianoSamplePreset', preset.id);
-              isSoundMenuOpen = true
-            "
-          >
-            {{ soundPresetLabels[preset.id] }}
-          </button>
         </div>
       </div>
     </div>
@@ -221,58 +240,11 @@ h1 {
   text-wrap: balance;
 }
 
-.language-switch,
-.notation-switch {
-  display: inline-grid;
-  flex: 0 0 96px;
-  width: 96px;
-  max-width: 100%;
-  min-height: 42px;
-  padding: 4px;
-  border: 0;
-  border-left: 1px solid rgba(23, 32, 29, 0.12);
-  border-bottom: 1px solid rgba(23, 32, 29, 0.12);
-  border-radius: 0;
-  background: rgba(23, 32, 29, 0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    0 8px 20px rgba(31, 41, 37, 0.08);
-}
-
-.language-switch,
-.notation-switch {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  min-height: 48px;
-}
-
-.notation-switch {
-  border-radius: 0;
-}
-
-.language-switch button,
-.notation-switch button {
-  border: 0;
-  border-radius: 6px;
-  color: #52615c;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 850;
-}
-
-.language-switch button.active,
-.notation-switch button.active {
-  color: #17201d;
-  background: #fffaf0;
-  box-shadow: 0 4px 14px rgba(31, 41, 37, 0.13);
-}
-
 .listen-button {
-  flex: 1 1 104px;
-  min-width: 0;
+  min-width: 112px;
   min-height: 48px;
   border: 0;
-  border-radius: 0;
+  border-radius: 0 0 0 8px;
   color: #fffaf0;
   background: #d74f2a;
   cursor: pointer;
@@ -288,7 +260,7 @@ h1 {
 }
 
 .info-menu,
-.sound-menu {
+.settings-menu {
   position: relative;
   display: grid;
   justify-items: end;
@@ -311,16 +283,9 @@ h1 {
   line-height: 1;
 }
 
-.info-menu .icon-button {
-  border-radius: 0 0 0 8px;
+.info-button {
   font-weight: 900;
   font-style: italic;
-}
-
-.sound-menu .icon-button {
-  width: 34px;
-  height: 32px;
-  border-radius: 0 0 0 8px;
 }
 
 .icon-button:hover,
@@ -341,8 +306,8 @@ h1 {
 
 .sound-loading {
   position: absolute;
-  top: 5px;
-  right: 40px;
+  top: 54px;
+  right: 0;
   width: max-content;
   max-width: 132px;
   padding: 5px 7px;
@@ -357,7 +322,7 @@ h1 {
 
 .menu-popover {
   position: absolute;
-  top: 36px;
+  top: 54px;
   right: 0;
   z-index: 20;
   display: grid;
@@ -370,8 +335,8 @@ h1 {
 }
 
 .info-popover {
-  top: 52px;
-  min-width: 168px;
+  min-width: 240px;
+  max-width: min(300px, calc(100vw - 20px));
   gap: 6px;
   color: #52615c;
   font-size: 0.76rem;
@@ -393,37 +358,72 @@ h1 {
   text-decoration: underline;
 }
 
-.sound-options p {
-  max-width: 190px;
-  margin: 2px 4px 6px;
+.settings-popover {
+  right: -34px;
+  width: min(360px, calc(100vw - 20px));
+  gap: 12px;
+  padding: 12px;
+}
+
+.settings-section {
+  display: grid;
+  gap: 7px;
+}
+
+.settings-section h2 {
+  margin: 0;
+  color: #17201d;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.settings-section p {
+  margin: 0;
   color: #5d6964;
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.3;
 }
 
-.sound-options button {
-  min-height: 34px;
+.settings-segment,
+.sample-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sample-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settings-segment button,
+.sample-options button {
+  min-height: 38px;
   border: 0;
   border-radius: 6px;
   color: #52615c;
-  background: transparent;
+  background: rgba(23, 32, 29, 0.06);
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 850;
-  text-align: left;
+  text-align: center;
 }
 
-.sound-options button:disabled {
+.sample-options button:disabled {
   cursor: wait;
   opacity: 0.56;
 }
 
-.sound-options button:hover,
-.sound-options button:focus-visible,
-.sound-options button.active {
+.settings-segment button:hover,
+.settings-segment button:focus-visible,
+.settings-segment button.active,
+.sample-options button:hover,
+.sample-options button:focus-visible,
+.sample-options button.active {
   color: #17201d;
-  background: #fff2dc;
+  background: #fffaf0;
+  box-shadow: 0 5px 14px rgba(31, 41, 37, 0.12);
   outline: 0;
 }
 
@@ -465,17 +465,16 @@ h1 {
     width: max-content;
   }
 
-  .language-switch {
-    width: 25vw;
+  .listen-button {
+    min-width: 86px;
   }
 
-  .notation-switch {
-    width: 25vw;
+  .settings-popover {
+    right: -34px;
   }
 
-  .language-switch,
-  .notation-switch {
-    grid-template-columns: repeat(2, 1fr);
+  .sample-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>
