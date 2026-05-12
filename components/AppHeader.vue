@@ -21,6 +21,7 @@ defineProps<{
   soundPresetLabels: Record<PianoSamplePresetId, string>
   selectedPianoPresetId: PianoSamplePresetId
   isPianoSamplerLoading: boolean
+  shouldShowWarmupReport: boolean
 }>()
 
 defineEmits<{
@@ -28,6 +29,7 @@ defineEmits<{
   setNoteNotation: [notation: NoteNotation]
   stop: []
   setPianoSamplePreset: [presetId: PianoSamplePresetId]
+  setShowWarmupReport: [value: boolean]
 }>()
 
 const isSoundMenuOpen = ref(false)
@@ -140,6 +142,17 @@ onBeforeUnmount(() => {
                   {{ soundPresetLabels[preset.id] }}
                 </button>
               </div>
+            </section>
+
+            <section class="settings-section">
+              <label class="settings-checkbox">
+                <input
+                  type="checkbox"
+                  :checked="shouldShowWarmupReport"
+                  @change="$emit('setShowWarmupReport', ($event.target as HTMLInputElement).checked)"
+                >
+                <span>{{ language === 'ru' ? 'Показывать отчет распевки' : 'Show warmup report' }}</span>
+              </label>
             </section>
           </div>
         </div>
@@ -384,6 +397,21 @@ h1 {
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.3;
+}
+
+.settings-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #17201d;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.settings-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: #277a73;
 }
 
 .settings-segment,

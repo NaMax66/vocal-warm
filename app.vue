@@ -17,6 +17,7 @@ import { isPianoSamplePresetId, type PianoSamplePresetId } from '~/utils/pianoSa
 const language = ref<Language>('en')
 const noteNotation = ref<NoteNotation>('letter')
 const selectedMidi = ref(60)
+const shouldShowWarmupReport = ref(false)
 const isSliderHolding = ref(false)
 const runtimeConfig = useRuntimeConfig()
 
@@ -139,6 +140,11 @@ function setLanguage(nextLanguage: Language) {
 function setNoteNotation(nextNotation: NoteNotation) {
   noteNotation.value = nextNotation
   localStorage.setItem('vocalwarm-note-notation', nextNotation)
+}
+
+function setShowWarmupReport(value: boolean) {
+  shouldShowWarmupReport.value = value
+  localStorage.setItem('vocalwarm-show-warmup-report', value ? '1' : '0')
 }
 
 async function selectPianoSamplePreset(presetId: PianoSamplePresetId) {
@@ -281,6 +287,8 @@ onMounted(() => {
     noteNotation.value = savedNoteNotation
   }
 
+  shouldShowWarmupReport.value = localStorage.getItem('vocalwarm-show-warmup-report') === '1'
+
   const savedPianoPresetId = localStorage.getItem('vocalwarm-piano-preset')
   if (isPianoSamplePresetId(savedPianoPresetId)) {
     restorePianoSamplePreset(savedPianoPresetId)
@@ -340,8 +348,10 @@ onBeforeUnmount(() => {
         :sound-loading-label="t.soundLoading"
         :selected-piano-preset-id="selectedPianoPresetId"
         :is-piano-sampler-loading="isPianoSamplerLoading"
+        :should-show-warmup-report="shouldShowWarmupReport"
         @set-language="setLanguage"
         @set-note-notation="setNoteNotation"
+        @set-show-warmup-report="setShowWarmupReport"
         @stop="stopListening"
         @set-piano-sample-preset="selectPianoSamplePreset"
       />
@@ -354,6 +364,18 @@ onBeforeUnmount(() => {
           :note="stableDisplayNote"
           :octave="stableOctave"
           :is-visible="isPitchReadoutVisible"
+        />
+
+        <WarmupProgram
+          :is-listening="isListening"
+          :frequency="frequency"
+          :cents="cents"
+          :volume="volume"
+          :language="language"
+          :note-notation="noteNotation"
+          :should-show-report="shouldShowWarmupReport"
+          @note-start="startKeyboardNote"
+          @note-end="stopKeyboardNote"
         />
 
         <TuningMeter :label="t.meterLabel" :meter-style="meterStyle" :is-aligned="isMeterAligned" />
@@ -525,7 +547,8 @@ button {
     grid-template-rows:
       minmax(42px, 0.48fr)
       minmax(86px, 0.9fr)
-      minmax(52px, 0.5fr)
+      auto
+      minmax(52px, 0.45fr)
       auto;
     align-items: center;
     min-height: 0;

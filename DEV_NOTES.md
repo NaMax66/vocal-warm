@@ -16,7 +16,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `components/AppHeader.vue` contains the `Stop` button, a wide settings gear menu for language / note notation / samples, and the info popover.
 - `components/PianoKeyboard.vue` renders the scrollable C2-B6 keyboard.
 - `components/KeyboardControls.vue` renders the fixed mobile/desktop note control buttons.
-- `components/PitchReadout.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback.
+- `components/PitchReadout.vue`, `WarmupProgram.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and the guided warmup exercise.
 - `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, sample preset selection, limiter, playback, and release timing.
 - `composables/usePitchDetector.ts` owns microphone capture and pitch detection.
 - `utils/pianoSamples.ts` owns sample CDN URLs and preset gains.
@@ -58,6 +58,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Keyboard control buttons should stay centered as a compact group on desktop and centered within the fixed mobile pad.
 - Mobile control buttons are fixed at the bottom and use taller tap targets.
 - Volume meter has no visible text labels; keep only the bars and an accessibility label.
+- `WarmupProgram.vue` is intentionally self-contained. It renders the "Распевка" button above the tuning rail, plays configurable 3-5 note ascending then descending call-and-response patterns, waits for sung pitch in `awaitSungPattern()`, transposes by semitone, and can open a copyable text report modal when enabled in settings.
 - Large pitch note readout appears only after the same detected note remains stable for `3s`, fades in, and waits briefly before disappearing on note drop/change so small voice slips do not blink it away.
 - The hint text under the arrow/Space controls was intentionally removed.
 - Do not show numeric cents offset in the readout or beside the pitch monitor.
@@ -71,6 +72,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - `vocalwarm-language`: selected UI language.
 - `vocalwarm-note-notation`: selected note notation (`letter` or `solfege`).
+- `vocalwarm-show-warmup-report`: opens the warmup report modal after a completed warmup when set to `1`; default is off.
 - `vocalwarm-piano-preset`: selected piano sample preset.
 - `vocalwarm-selected-midi`: selected note for Space / arrow controls.
 - `vocalwarm-keyboard-scroll-left`: horizontal scroll position of the piano keyboard.

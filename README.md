@@ -9,7 +9,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Project folder: `\Documents\Codex\VocalWarm`
 - App type: Nuxt 3 single-page app.
 - `app.vue` wires the page together and keeps only screen-level state.
-- Main UI blocks live in `components/`: `AppHeader.vue`, `StartOverlay.vue`, `PitchReadout.vue`, `TuningMeter.vue`, `PianoKeyboard.vue`, `KeyboardControls.vue`, and `VolumeMeter.vue`.
+- Main UI blocks live in `components/`: `AppHeader.vue`, `StartOverlay.vue`, `PitchReadout.vue`, `WarmupProgram.vue`, `TuningMeter.vue`, `PianoKeyboard.vue`, `KeyboardControls.vue`, and `VolumeMeter.vue`.
 - Shared translations live in `utils/i18n.ts`.
 - Piano sample CDN settings live in `utils/pianoSamples.ts`.
 - Shared note math and keyboard range constants live in `composables/useNoteMath.ts`.
@@ -31,6 +31,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - The keyboard supports sustained notes while holding a key/pointer, and short taps keep notes active for at least about 0.5 seconds before release.
 - Pressed key highlighting fades out over about 0.5 seconds to match the short note hold.
 - The selected note is marked on the keyboard with a small red cross.
+- `WarmupProgram.vue` adds a "Warmup" / "Распевка" call-and-response exercise above the tuning rail: it can play 3-5 notes up, waits for the singer, plays the same pattern down, waits again, transposes up by semitone, and can show a copyable text report at the end when enabled in settings.
 - The note control selects C2-B6 with arrow keys; holding Space sustains the selected note.
 - The selected note for Space control is stored in `localStorage` as `vocalwarm-selected-midi`.
 - The keyboard horizontal scroll position is stored in `localStorage` as `vocalwarm-keyboard-scroll-left`.
