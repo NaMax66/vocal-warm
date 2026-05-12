@@ -65,6 +65,18 @@ const meterSteps = computed(() => Array.from({ length: totalSteps }, (_, index) 
   background: #277a73;
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  .volume {
+    width: min(58%, 360px);
+    min-height: 22px;
+    margin-top: clamp(18px, 6vh, 56px);
+  }
+
+  .volume-steps {
+    height: clamp(54px, 10vh, 86px);
+  }
+}
+
 @media (max-width: 560px) {
   .volume {
     width: min(76%, 320px);

@@ -358,24 +358,26 @@ onBeforeUnmount(() => {
 
         <TuningMeter :label="t.meterLabel" :meter-style="meterStyle" :is-aligned="isMeterAligned" />
 
-        <PianoKeyboard
-          :detected-midi="activeMidi"
-          :pressed-midi="pressedMidi"
-          :selected-midi="selectedMidi"
-          :note-notation="noteNotation"
-          :label="t.keyboardLabel"
-          @note-start="startKeyboardNote"
-          @note-end="stopKeyboardNote"
-        />
+        <div class="keyboard-dock">
+          <PianoKeyboard
+            :detected-midi="activeMidi"
+            :pressed-midi="pressedMidi"
+            :selected-midi="selectedMidi"
+            :note-notation="noteNotation"
+            :label="t.keyboardLabel"
+            @note-start="startKeyboardNote"
+            @note-end="stopKeyboardNote"
+          />
 
-        <KeyboardControls
-          :keyboard-label="t.keyboardControl"
-          :selected-note-text="t.selectedNote"
-          :selected-note-label="selectedDisplayNoteLabel"
-          @step-selected-midi="stepSelectedMidi"
-          @hold-selected-note="holdSelectedNote"
-          @release-selected-note="releaseSelectedNote"
-        />
+          <KeyboardControls
+            :keyboard-label="t.keyboardControl"
+            :selected-note-text="t.selectedNote"
+            :selected-note-label="selectedDisplayNoteLabel"
+            @step-selected-midi="stepSelectedMidi"
+            @hold-selected-note="holdSelectedNote"
+            @release-selected-note="releaseSelectedNote"
+          />
+        </div>
 
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
@@ -480,15 +482,69 @@ button {
   position: relative;
 }
 
+.keyboard-dock {
+  display: grid;
+  gap: 8px;
+}
+
 .error {
   margin: 18px 0 0;
   color: #9f2f1a;
   font-weight: 700;
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .page-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .tuner {
+    --tuner-padding: clamp(10px, 2vw, 16px);
+
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .tuner-content {
+    display: grid;
+    grid-template-rows:
+      minmax(42px, 0.48fr)
+      minmax(86px, 0.9fr)
+      minmax(52px, 0.5fr)
+      auto;
+    align-items: center;
+    min-height: 0;
+  }
+
+  .keyboard-dock {
+    align-self: end;
+    gap: 6px;
+    margin: 0 calc(var(--tuner-padding) * -1) calc(var(--tuner-padding) * -1);
+    padding: 0 14px 12px;
+    background: rgba(255, 252, 244, 0.9);
+    box-shadow: 0 -12px 34px rgba(31, 41, 37, 0.12);
+    backdrop-filter: blur(12px) saturate(1.08);
+  }
+}
+
 @media (max-width: 560px) {
   .page-shell {
-    padding: 5px;
+    padding: 0;
   }
 
   .tuner {
@@ -498,10 +554,6 @@ button {
     border-right: 0;
     border-left: 0;
     border-radius: 0;
-  }
-
-  .tuner-content {
-    padding-bottom: 80px;
   }
 }
 </style>

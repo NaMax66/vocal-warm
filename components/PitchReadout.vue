@@ -45,6 +45,22 @@ defineProps<{
   font-weight: 850;
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  .readout {
+    height: clamp(92px, 15vh, 136px);
+    margin: 4px 0;
+  }
+
+  .note {
+    font-size: clamp(4.6rem, 15vw, 8rem);
+  }
+
+  .octave {
+    min-width: 32px;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+  }
+}
+
 @media (max-width: 560px) {
   .readout {
     height: 104px;

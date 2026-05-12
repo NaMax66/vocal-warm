@@ -65,7 +65,7 @@ defineEmits<{
   width: 100%;
   place-items: center;
   justify-items: center;
-  margin: -8px auto 22px;
+  margin: 0 auto;
 }
 
 .control-buttons {
@@ -141,23 +141,38 @@ defineEmits<{
   font-size: 1.12rem;
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  .keyboard-control-pad {
+    margin: 0;
+  }
+
+  .control-buttons {
+    grid-template-columns: 58px minmax(180px, 240px) 58px;
+    gap: 8px;
+  }
+
+  .control-key {
+    min-height: clamp(48px, 7vh, 58px);
+  }
+}
+
 @media (max-width: 560px) {
   .space-label {
     display: none;
   }
 
   .keyboard-control-pad {
-    position: fixed;
-    right: 5px;
-    bottom: 5px;
-    left: 5px;
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
     z-index: 35;
     margin: 0;
-    padding: 10px;
-    border-radius: 8px;
-    background: rgba(255, 252, 244, 0.9);
-    box-shadow: 0 14px 36px rgba(31, 41, 37, 0.16);
-    backdrop-filter: blur(12px) saturate(1.08);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .control-buttons {

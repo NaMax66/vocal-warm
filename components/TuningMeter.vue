@@ -122,6 +122,17 @@ defineProps<{
   background: rgba(19, 146, 87, 0.22);
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  .tuning-meter {
+    height: clamp(50px, 8vh, 64px);
+    margin: 4px 6px;
+  }
+
+  .rail {
+    height: clamp(50px, 8vh, 64px);
+  }
+}
+
 @media (max-width: 560px) {
   .tuning-meter {
     height: 58px;

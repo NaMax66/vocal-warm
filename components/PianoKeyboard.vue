@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  margin: 4px 0 24px;
+  margin: 4px 0 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-color: rgba(23, 32, 29, 0.28) transparent;
@@ -326,9 +326,32 @@ onBeforeUnmount(() => {
   font-size: 0.58rem;
 }
 
+@media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
+  .keyboard-wrap {
+    margin: 0;
+  }
+
+  .keyboard {
+    --white-key-width: 32px;
+    --black-key-width: 21px;
+    height: clamp(112px, 16vh, 138px);
+    min-width: 1120px;
+  }
+
+  .white-keys,
+  .piano-key.white {
+    height: clamp(112px, 16vh, 138px);
+  }
+
+  .black-keys,
+  .piano-key.black {
+    height: clamp(72px, 10vh, 86px);
+  }
+}
+
 @media (max-width: 560px) {
   .keyboard-wrap {
-    margin: 0 0 12px;
+    margin: 0;
   }
 
   .keyboard {
