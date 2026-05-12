@@ -218,11 +218,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   letter-spacing: 0;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background 500ms ease,
-    box-shadow 500ms ease,
-    color 500ms ease,
-    transform 500ms ease;
+  transition: transform 90ms ease;
 }
 
 .piano-key:active {

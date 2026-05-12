@@ -20,6 +20,12 @@ export function usePitchDetector() {
   let sampleBuffer: Float32Array | null = null
   let micBanLayoutHackIntervalId: ReturnType<typeof setInterval> | null = null
 
+  function resolveAudioContextCtor() {
+    return window.AudioContext || (window as typeof window & {
+      webkitAudioContext?: typeof AudioContext
+    }).webkitAudioContext
+  }
+
   function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     let rms = 0
 
@@ -126,15 +132,23 @@ export function usePitchDetector() {
     errorMessage.value = ''
 
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false
-        }
-      })
+      const AudioContextCtor = resolveAudioContextCtor()
 
-      audioContext = new AudioContext()
+      if (!AudioContextCtor) {
+        throw new Error('AudioContext is not supported')
+      }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Microphone access is not supported')
+      }
+
+      audioContext = new AudioContextCtor()
+
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume()
+      }
+
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       analyser = audioContext.createAnalyser()
       analyser.fftSize = 4096
       sampleBuffer = new Float32Array(analyser.fftSize)
@@ -145,6 +159,7 @@ export function usePitchDetector() {
       onStarted?.()
       tick()
     } catch (error) {
+      stopListening()
       errorMessage.value = error instanceof Error ? error.message : micErrorMessage
       statusKey.value = 'micUnavailable'
     }

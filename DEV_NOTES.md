@@ -25,6 +25,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Audio
 
 - Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
+- Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback, resumes suspended contexts, and requests `{ audio: true }` for Apple/Safari compatibility. Avoid restoring strict `echoCancellation/noiseSuppression/autoGainControl` constraints unless tested on iOS.
 - Samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
 - Current presets in `utils/pianoSamples.ts`:
   - `velocity1` / Soft / ru: Myagkie / `+14 dB`
@@ -48,6 +49,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - App name, version, and repo link live in an `i` info popover styled like the sound settings popover.
 - The large brand/title header is visible before listening starts, then hidden during the active singing UI.
 - Start overlay is intentionally clickable as a whole, with the topbar above it, so in-app browser clicks can start the dev mic-ban layout hack reliably.
+- If the tab stays hidden for 30 seconds while listening, the app calls `stopListening()` and returns to inactive mode. Returning to the tab before 30 seconds cancels the timeout.
 - Note notation switch is next to language and toggles letter notes (`C`) versus solfege (`До`). It changes display labels only; Tone.js playback still uses letter note names internally.
 - Sound preset gear sits under the `Stop` button, near the right edge.
 - Sound menu includes a short explanation of velocity layers and closes on outside click.

@@ -32,6 +32,9 @@ defineEmits<{
         @pointerup="$emit('releaseSelectedNote')"
         @pointercancel="$emit('releaseSelectedNote')"
         @pointerleave="$emit('releaseSelectedNote')"
+        @touchstart.prevent="$emit('holdSelectedNote')"
+        @touchend.prevent="$emit('releaseSelectedNote')"
+        @touchcancel.prevent="$emit('releaseSelectedNote')"
         @contextmenu.prevent
         @keydown.space.prevent="$emit('holdSelectedNote')"
         @keyup.space.prevent="$emit('releaseSelectedNote')"
@@ -118,6 +121,10 @@ defineEmits<{
   gap: 12px;
   color: #fffaf0;
   background: #277a73;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
 }
 
 .space-key:hover,

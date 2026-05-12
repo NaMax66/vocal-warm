@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
 .topbar {
   position: relative;
   z-index: 3;
-  min-height: 152px;
+  min-height: 188px;
 }
 
 .topbar.listening {
@@ -170,6 +170,13 @@ onBeforeUnmount(() => {
 .brand-header {
   position: relative;
   z-index: 70;
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  padding-right: clamp(18px, 5vw, 56px);
+  padding-left: clamp(18px, 5vw, 56px);
+  padding-top: clamp(34px, 7vw, 64px);
+  text-align: center;
 }
 
 .controls {
@@ -194,6 +201,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   margin: 0 0 8px;
   color: #5d6964;
@@ -206,9 +214,11 @@ onBeforeUnmount(() => {
 h1 {
   margin: 0;
   color: #17201d;
-  font-size: clamp(2rem, 6vw, 4.4rem);
+  max-width: min(100%, 860px);
+  font-size: clamp(2.25rem, 7.1vw, 5.25rem);
   line-height: 0.95;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .language-switch,
@@ -425,7 +435,7 @@ h1 {
 
 @media (max-width: 560px) {
   .topbar {
-    min-height: 118px;
+    min-height: 152px;
   }
 
   .topbar.listening {
@@ -433,10 +443,13 @@ h1 {
   }
 
   h1 {
-    margin-top: 12px;
-    padding: 0 8px;
-    text-align: center;
-    font-size: clamp(2.1rem, 13vw, 3.2rem);
+    font-size: clamp(2.45rem, 14.5vw, 3.75rem);
+  }
+
+  .brand-header {
+    padding-right: 18px;
+    padding-left: 18px;
+    padding-top: 42px;
   }
 
   .controls {

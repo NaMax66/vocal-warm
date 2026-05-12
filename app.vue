@@ -62,10 +62,12 @@ const isPitchReadoutVisible = ref(false)
 let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
 let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
 const pitchReadoutGraceMs = 900
+const inactiveTabStopDelayMs = 30000
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 500
 const pitchMeterGreenZoneCents = 10
 const pitchMeterCentsRange = 50
+let inactiveTabTimeoutId: ReturnType<typeof setTimeout> | null = null
 const pitchMeterOffsetCents = computed(() => Math.max(
   -pitchMeterCentsRange,
   Math.min(pitchMeterCentsRange, cents.value)
@@ -103,6 +105,15 @@ function clearStableNoteHideTimeout() {
 
   clearTimeout(stableNoteHideTimeoutId)
   stableNoteHideTimeoutId = null
+}
+
+function clearInactiveTabTimeout() {
+  if (!inactiveTabTimeoutId) {
+    return
+  }
+
+  clearTimeout(inactiveTabTimeoutId)
+  inactiveTabTimeoutId = null
 }
 
 function hideStableNoteAfterGrace() {
@@ -211,6 +222,25 @@ function handleGlobalKeyup(event: KeyboardEvent) {
   }
 }
 
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    clearInactiveTabTimeout()
+    return
+  }
+
+  if (!isListening.value || inactiveTabTimeoutId) {
+    return
+  }
+
+  inactiveTabTimeoutId = setTimeout(() => {
+    inactiveTabTimeoutId = null
+
+    if (document.visibilityState === 'hidden' && isListening.value) {
+      stopListening()
+    }
+  }, inactiveTabStopDelayMs)
+}
+
 watch([note, octave], ([nextNote, nextOctave]) => {
   clearStableNoteTimeout()
 
@@ -267,6 +297,7 @@ onMounted(() => {
 
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('keyup', handleGlobalKeyup)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 useHead(() => ({
@@ -279,8 +310,10 @@ useHead(() => ({
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('keyup', handleGlobalKeyup)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   clearStableNoteTimeout()
   clearStableNoteHideTimeout()
+  clearInactiveTabTimeout()
   disposeKeyboardAudio()
   stopListening()
 })
@@ -422,7 +455,25 @@ button {
 }
 
 .tuner.inactive .topbar {
+  z-index: auto;
+}
+
+.tuner.inactive .brand-header {
   z-index: 90;
+  pointer-events: none;
+}
+
+.tuner.inactive .controls,
+.tuner.inactive .volume,
+.tuner.inactive .readout,
+.tuner.inactive .tuning-meter,
+.tuner.inactive .keyboard-wrap,
+.tuner.inactive .keyboard-control-pad {
+  filter: blur(2px);
+  transform: scale(0.998);
+  transition:
+    filter 220ms ease,
+    transform 220ms ease;
 }
 
 .tuner-content {
