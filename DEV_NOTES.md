@@ -16,7 +16,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `components/AppHeader.vue` contains the `Stop` button, a wide settings gear menu for language / note notation / samples, and the info popover.
 - `components/PianoKeyboard.vue` renders the scrollable C2-B6 keyboard.
 - `components/KeyboardControls.vue` renders the fixed mobile/desktop note control buttons.
-- `components/PitchReadout.vue`, `WarmupProgram.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and the guided warmup exercise.
+- `components/PitchReadout.vue`, `WarmupProgram.vue`, `NoteHoldExercise.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and guided exercises.
 - `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, sample preset selection, limiter, playback, and release timing.
 - `composables/usePitchDetector.ts` owns microphone capture and pitch detection.
 - `utils/pianoSamples.ts` owns sample CDN URLs and preset gains.
@@ -62,8 +62,10 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Large pitch note readout appears only after the same detected note remains stable for `3s`, fades in, and waits briefly before disappearing on note drop/change so small voice slips do not blink it away.
 - The hint text under the arrow/Space controls was intentionally removed.
 - Do not show numeric cents offset in the readout or beside the pitch monitor.
-- `TuningMeter.vue` is an aircraft-navigation-style pitch monitor: one horizontal rail, a 25vw moving section that shifts very smoothly up/down from cents offset, and the whole rail glows green when aligned within about `10` cents. Do not restore numeric `-50/+50` labels or the old vertical needle meter.
-- Pitch monitor tuning constants live in `app.vue`: `pitchMeterMaxOffsetPx` controls vertical travel from center, `pitchMeterSmoothnessMs` controls movement duration, and `pitchMeterGreenZoneCents` controls the centered green zone. The exact center is `0` cents from the nearest exact note; between notes is around `+/-50` cents and should be visually away from center.
+- `TuningMeter.vue` is an aircraft-navigation-style pitch monitor: one horizontal rail, a 25vw moving section that shifts up/down from cents offset, and the whole rail glows green when aligned within about `10` cents. It currently shows debug scale labels: `+50c` top, `0` center, `-50c` bottom.
+- Pitch monitor tuning constants live in `TuningMeter.vue`: `pitchMeterMaxOffsetPx` controls vertical travel from center, `pitchMeterSmoothnessMs` controls movement duration, `pitchMeterGreenZoneCents` controls the centered green zone, and `pitchMeterDirection = -1` means higher pitch moves up. The exact center is `0` cents from the nearest exact note; between notes is around `+/-50` cents and should be visually away from center.
+- `TuningMeter.vue` supports normal mode and target-note mode. Normal mode reads nearest-note `cents`; target mode receives `targetMidi`, compares microphone `frequency` to that exact note, and parks the indicator at `-50c` when there is no sung frequency.
+- `NoteHoldExercise.vue` renders a single `Train note` / `Тренировать ноту` button. It waits for one played key, sets that key as the tuning target, then plays it 5 times for `2s` with `3s` pauses.
 - Button text selection is disabled globally.
 - Mobile viewport scaling is disabled with `maximum-scale=1, user-scalable=no`.
 - Mobile long-press browser effects are suppressed on note/control buttons with `touch-action`, disabled callout, transparent tap highlight, and prevented context menus where notes are held.
@@ -81,6 +83,15 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Keep `README.md` and `README.ru.md` in sync with behavior.
 - Current README files document sample presets, localStorage keys, limiter, preload behavior, outside-click menu closing, selected-note marker, short-tap release behavior, and keyboard scroll persistence.
+
+## Refactoring Direction
+
+- Keep `app.vue` as an orchestrator: top-level session state, persisted settings, microphone/audio composables, and event wiring between widgets.
+- Keep widget-specific behavior inside the widget component. For example, `TuningMeter.vue` owns rail geometry, target-note display logic, green-zone decisions, motion duration, direction, and scale labels.
+- Keep each exercise self-contained (`WarmupProgram.vue`, `NoteHoldExercise.vue`) with its own phase machine, prompts, timing constants, and note playback requests. Exercises should emit events instead of reaching into audio or detector composables directly.
+- Prefer shared helpers in `composables/useNoteMath.ts` when musical math repeats across components, such as cents from a frequency to a target MIDI note.
+- If exercises grow beyond a few independent components, introduce a small exercise contract or switcher around `targetMidi`, running state, prompt text, and `noteStart` / `noteEnd` events instead of expanding `app.vue`.
+- Move new RU/EN strings toward `utils/i18n.ts` when the copy stabilizes; short experimental exercise labels may live locally while behavior is still being shaped.
 
 ## TODO
 
