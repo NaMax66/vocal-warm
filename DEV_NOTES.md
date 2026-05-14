@@ -25,7 +25,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Audio
 
 - Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
-- Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback, resumes suspended contexts, and requests `{ audio: true }` for Apple/Safari compatibility. Avoid restoring strict `echoCancellation/noiseSuppression/autoGainControl` constraints unless tested on iOS.
+- Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback and resumes suspended contexts. It first requests raw-ish audio with `echoCancellation`, `noiseSuppression`, and `autoGainControl` disabled, then falls back to `{ audio: true }` if those constraints fail for Apple/Safari compatibility. Sustained singing can disappear on phone browsers when default noise suppression / auto gain treats the note as background.
 - Samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
 - Current presets in `utils/pianoSamples.ts`:
   - `velocity1` / Soft / ru: Myagkie / `+14 dB`

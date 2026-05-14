@@ -26,6 +26,21 @@ export function usePitchDetector() {
     }).webkitAudioContext
   }
 
+  async function getMicrophoneStream() {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      })
+    } catch (error) {
+      console.warn('Raw microphone constraints failed, falling back to default audio', error)
+      return navigator.mediaDevices.getUserMedia({ audio: true })
+    }
+  }
+
   function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     let rms = 0
 
@@ -147,7 +162,7 @@ export function usePitchDetector() {
         await audioContext.resume()
       }
 
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream = await getMicrophoneStream()
       analyser = audioContext.createAnalyser()
       analyser.fftSize = 4096
       sampleBuffer = new Float32Array(analyser.fftSize)
