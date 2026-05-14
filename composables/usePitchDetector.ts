@@ -1,4 +1,4 @@
-import { frequencyToMidi, isMidiInKeyboardRange, midiToFrequency, noteNames } from '~/composables/useNoteMath'
+import { frequencyToMidi, frequencyToMidiCents, isMidiInKeyboardRange, midiToFrequency, noteNames } from '~/composables/useNoteMath'
 import type { StatusKey } from '~/utils/i18n'
 
 export function usePitchDetector() {
@@ -107,14 +107,13 @@ export function usePitchDetector() {
     }
 
     const midi = frequencyToMidi(nextFrequency)
-    const exactFrequency = midiToFrequency(midi)
     const noteIndex = ((midi % 12) + 12) % 12
 
     frequency.value = nextFrequency
     note.value = noteNames[noteIndex]
     octave.value = String(Math.floor(midi / 12) - 1)
     activeMidi.value = isMidiInKeyboardRange(midi) ? midi : null
-    cents.value = Math.round(1200 * Math.log2(nextFrequency / exactFrequency))
+    cents.value = frequencyToMidiCents(nextFrequency, midi)
     statusKey.value = 'listening'
   }
 

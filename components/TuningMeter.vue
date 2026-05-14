@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { midiToFrequency } from '~/composables/useNoteMath'
+import { frequencyToMidiCents } from '~/composables/useNoteMath'
 
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 100
@@ -24,7 +24,7 @@ const targetCents = computed(() => {
     return -pitchMeterCentsRange
   }
 
-  return Math.round(1200 * Math.log2(props.frequency / midiToFrequency(props.targetMidi)))
+  return frequencyToMidiCents(props.frequency, props.targetMidi)
 })
 const pitchMeterOffsetCents = computed(() => Math.max(
   -pitchMeterCentsRange,

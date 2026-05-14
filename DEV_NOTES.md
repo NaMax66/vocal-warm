@@ -89,7 +89,6 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Keep `app.vue` as an orchestrator: top-level session state, persisted settings, microphone/audio composables, and event wiring between widgets.
 - Keep widget-specific behavior inside the widget component. For example, `TuningMeter.vue` owns rail geometry, target-note display logic, green-zone decisions, motion duration, direction, and scale labels.
 - Keep each exercise self-contained (`WarmupProgram.vue`, `NoteHoldExercise.vue`) with its own phase machine, prompts, timing constants, and note playback requests. Exercises should emit events instead of reaching into audio or detector composables directly.
-- Prefer shared helpers in `composables/useNoteMath.ts` when musical math repeats across components, such as cents from a frequency to a target MIDI note.
 - If exercises grow beyond a few independent components, introduce a small exercise contract or switcher around `targetMidi`, running state, prompt text, and `noteStart` / `noteEnd` events instead of expanding `app.vue`.
 - Move new RU/EN strings toward `utils/i18n.ts` when the copy stabilizes; short experimental exercise labels may live locally while behavior is still being shaped.
 

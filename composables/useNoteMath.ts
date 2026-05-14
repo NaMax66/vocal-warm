@@ -42,6 +42,10 @@ export function midiToFrequency(midi: number) {
   return 440 * 2 ** ((midi - 69) / 12)
 }
 
+export function frequencyToMidiCents(frequency: number, midi: number) {
+  return Math.round(1200 * Math.log2(frequency / midiToFrequency(midi)))
+}
+
 export function isMidiInKeyboardRange(midi: number) {
   return midi >= keyboardMinMidi && midi <= keyboardMaxMidi
 }

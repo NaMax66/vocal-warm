@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {
   frequencyToMidi,
+  frequencyToMidiCents,
   keyboardMaxMidi,
   keyboardMinMidi,
   midiToDisplayNoteName,
-  midiToFrequency,
   midiToNoteName,
   type NoteNotation
 } from '~/composables/useNoteMath'
@@ -118,17 +118,13 @@ function getPattern(startMidi: number, direction: WarmupDirection) {
   return direction === 'up' ? upPattern : [...upPattern].reverse()
 }
 
-function getCentsFromTarget(frequency: number, targetMidi: number) {
-  return Math.round(1200 * Math.log2(frequency / midiToFrequency(targetMidi)))
-}
-
 function getDetectedSampleForTarget(targetMidi: number): SungSample | null {
   if (!props.frequency || !Number.isFinite(props.frequency)) {
     return null
   }
 
   const midi = frequencyToMidi(props.frequency)
-  const centsFromTarget = getCentsFromTarget(props.frequency, targetMidi)
+  const centsFromTarget = frequencyToMidiCents(props.frequency, targetMidi)
 
   return {
     frequency: props.frequency,
