@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { midiToFrequency } from '~/composables/useNoteMath'
+
 const pitchMeterMaxOffsetPx = 24
 const pitchMeterSmoothnessMs = 100
 const pitchMeterGreenZoneCents = 10
@@ -8,12 +10,25 @@ const pitchMeterDirection = -1
 const props = defineProps<{
   label: string
   cents: number
-  hasSignal: boolean
+  frequency: number | null
+  targetMidi: number | null
 }>()
 
+const hasSignal = computed(() => Boolean(props.frequency))
+const targetCents = computed(() => {
+  if (props.targetMidi === null) {
+    return props.cents
+  }
+
+  if (!props.frequency || !Number.isFinite(props.frequency)) {
+    return -pitchMeterCentsRange
+  }
+
+  return Math.round(1200 * Math.log2(props.frequency / midiToFrequency(props.targetMidi)))
+})
 const pitchMeterOffsetCents = computed(() => Math.max(
   -pitchMeterCentsRange,
-  Math.min(pitchMeterCentsRange, props.cents)
+  Math.min(pitchMeterCentsRange, targetCents.value)
 ))
 const pitchMeterOffsetPx = computed(() => Math.max(
   -pitchMeterMaxOffsetPx,
@@ -27,7 +42,7 @@ const meterStyle = computed(() => ({
   '--pitch-motion-duration': `${pitchMeterSmoothnessMs}ms`
 }))
 const isAligned = computed(() => (
-  props.hasSignal && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
+  hasSignal.value && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
 ))
 </script>
 

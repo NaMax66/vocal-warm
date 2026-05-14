@@ -60,6 +60,7 @@ const stableDisplayNote = computed(() => (
   stableNote.value === '--' ? stableNote.value : noteNameToDisplayName(stableNote.value, noteNotation.value)
 ))
 const isPitchReadoutVisible = ref(false)
+const noteHoldTargetMidi = ref<number | null>(null)
 let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
 let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
 const pitchReadoutGraceMs = 900
@@ -123,6 +124,10 @@ function setNoteNotation(nextNotation: NoteNotation) {
 function setShowWarmupReport(value: boolean) {
   shouldShowWarmupReport.value = value
   localStorage.setItem('vocalwarm-show-warmup-report', value ? '1' : '0')
+}
+
+function setNoteHoldTargetMidi(midi: number | null) {
+  noteHoldTargetMidi.value = midi
 }
 
 async function selectPianoSamplePreset(presetId: PianoSamplePresetId) {
@@ -356,7 +361,22 @@ onBeforeUnmount(() => {
           @note-end="stopKeyboardNote"
         />
 
-        <TuningMeter :label="t.meterLabel" :cents="cents" :has-signal="Boolean(frequency)" />
+        <NoteHoldExercise
+          :is-listening="isListening"
+          :pressed-midi="pressedMidi"
+          :language="language"
+          :note-notation="noteNotation"
+          @note-start="startKeyboardNote"
+          @note-end="stopKeyboardNote"
+          @target-change="setNoteHoldTargetMidi"
+        />
+
+        <TuningMeter
+          :label="t.meterLabel"
+          :cents="cents"
+          :frequency="frequency"
+          :target-midi="noteHoldTargetMidi"
+        />
 
         <div class="keyboard-dock">
           <PianoKeyboard
