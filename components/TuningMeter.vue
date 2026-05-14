@@ -1,14 +1,42 @@
 <script setup lang="ts">
-defineProps<{
+const pitchMeterMaxOffsetPx = 24
+const pitchMeterSmoothnessMs = 100
+const pitchMeterGreenZoneCents = 10
+const pitchMeterCentsRange = 50
+const pitchMeterDirection = -1
+
+const props = defineProps<{
   label: string
-  meterStyle: Record<string, string>
-  isAligned: boolean
+  cents: number
+  hasSignal: boolean
 }>()
+
+const pitchMeterOffsetCents = computed(() => Math.max(
+  -pitchMeterCentsRange,
+  Math.min(pitchMeterCentsRange, props.cents)
+))
+const pitchMeterOffsetPx = computed(() => Math.max(
+  -pitchMeterMaxOffsetPx,
+  Math.min(
+    pitchMeterMaxOffsetPx,
+    pitchMeterDirection * (pitchMeterOffsetCents.value / pitchMeterCentsRange) * pitchMeterMaxOffsetPx
+  )
+))
+const meterStyle = computed(() => ({
+  '--pitch-offset': `${pitchMeterOffsetPx.value}px`,
+  '--pitch-motion-duration': `${pitchMeterSmoothnessMs}ms`
+}))
+const isAligned = computed(() => (
+  props.hasSignal && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
+))
 </script>
 
 <template>
   <div class="tuning-meter" :class="{ aligned: isAligned }" :aria-label="label">
     <div class="rail" :style="meterStyle">
+      <span class="scale-label scale-label-top" aria-hidden="true">+50c</span>
+      <span class="scale-label scale-label-center" aria-hidden="true">0</span>
+      <span class="scale-label scale-label-bottom" aria-hidden="true">-50c</span>
       <i class="target-line" />
       <i class="moving-section" />
     </div>
@@ -63,6 +91,30 @@ defineProps<{
   background:
     linear-gradient(180deg, transparent calc(50% - 25px), rgba(23, 32, 29, 0.08) calc(50% - 24px), transparent calc(50% - 23px)),
     linear-gradient(180deg, transparent calc(50% + 23px), rgba(23, 32, 29, 0.08) calc(50% + 24px), transparent calc(50% + 25px));
+}
+
+.scale-label {
+  position: absolute;
+  z-index: 2;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(23, 32, 29, 0.62);
+  pointer-events: none;
+}
+
+.scale-label-top {
+  top: 9px;
+}
+
+.scale-label-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.scale-label-bottom {
+  bottom: 9px;
 }
 
 .target-line {

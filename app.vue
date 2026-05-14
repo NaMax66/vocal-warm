@@ -64,31 +64,9 @@ let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
 let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
 const pitchReadoutGraceMs = 900
 const inactiveTabStopDelayMs = 30000
-const pitchMeterMaxOffsetPx = 24
-const pitchMeterSmoothnessMs = 500
-const pitchMeterGreenZoneCents = 10
-const pitchMeterCentsRange = 50
 let inactiveTabTimeoutId: ReturnType<typeof setTimeout> | null = null
-const pitchMeterOffsetCents = computed(() => Math.max(
-  -pitchMeterCentsRange,
-  Math.min(pitchMeterCentsRange, cents.value)
-))
-
-const meterStyle = computed(() => ({
-  '--pitch-offset': `${Math.max(
-    -pitchMeterMaxOffsetPx,
-    Math.min(
-      pitchMeterMaxOffsetPx,
-      (pitchMeterOffsetCents.value / pitchMeterCentsRange) * pitchMeterMaxOffsetPx
-    )
-  )}px`,
-  '--pitch-motion-duration': `${pitchMeterSmoothnessMs}ms`
-}))
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
-const isMeterAligned = computed(() => (
-  Boolean(frequency.value) && Math.abs(pitchMeterOffsetCents.value) <= pitchMeterGreenZoneCents
-))
 
 function clearStableNoteTimeout() {
   if (!stableNoteTimeoutId) {
@@ -378,7 +356,7 @@ onBeforeUnmount(() => {
           @note-end="stopKeyboardNote"
         />
 
-        <TuningMeter :label="t.meterLabel" :meter-style="meterStyle" :is-aligned="isMeterAligned" />
+        <TuningMeter :label="t.meterLabel" :cents="cents" :has-signal="Boolean(frequency)" />
 
         <div class="keyboard-dock">
           <PianoKeyboard
