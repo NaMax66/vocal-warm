@@ -6,12 +6,12 @@ import {
   keyboardMinMidi,
   midiToDisplayNoteName,
   midiToNoteName,
-  noteNameToDisplayName,
   noteNotationLabels,
   noteNotations,
   type NoteNotation
 } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
+import { useStablePitchReadout } from '~/composables/useStablePitchReadout'
 import {
   isKeyboardInstrumentId,
   isSamplePresetId,
@@ -63,38 +63,17 @@ const isMicBanLayoutHackEnabled = computed(() => String(runtimeConfig.public.mic
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
-const stableNote = ref('--')
-const stableOctave = ref('')
-const stableDisplayNote = computed(() => (
-  stableNote.value === '--' ? stableNote.value : noteNameToDisplayName(stableNote.value, noteNotation.value)
-))
-const isPitchReadoutVisible = ref(false)
 const noteHoldTargetMidi = ref<number | null>(null)
-let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
-let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
-const pitchReadoutGraceMs = 900
 const inactiveTabStopDelayMs = 30000
 let inactiveTabTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
-
-function clearStableNoteTimeout() {
-  if (!stableNoteTimeoutId) {
-    return
-  }
-
-  clearTimeout(stableNoteTimeoutId)
-  stableNoteTimeoutId = null
-}
-
-function clearStableNoteHideTimeout() {
-  if (!stableNoteHideTimeoutId) {
-    return
-  }
-
-  clearTimeout(stableNoteHideTimeoutId)
-  stableNoteHideTimeoutId = null
-}
+const {
+  stableOctave,
+  stableDisplayNote,
+  isPitchReadoutVisible,
+  disposeStablePitchReadout
+} = useStablePitchReadout(note, octave, noteNotation)
 
 function clearInactiveTabTimeout() {
   if (!inactiveTabTimeoutId) {
@@ -103,17 +82,6 @@ function clearInactiveTabTimeout() {
 
   clearTimeout(inactiveTabTimeoutId)
   inactiveTabTimeoutId = null
-}
-
-function hideStableNoteAfterGrace() {
-  clearStableNoteHideTimeout()
-
-  stableNoteHideTimeoutId = setTimeout(() => {
-    isPitchReadoutVisible.value = false
-    stableNote.value = '--'
-    stableOctave.value = ''
-    stableNoteHideTimeoutId = null
-  }, pitchReadoutGraceMs)
 }
 
 function resolveLanguage(browserLanguage: string | undefined): Language {
@@ -245,35 +213,6 @@ function handleVisibilityChange() {
   }, inactiveTabStopDelayMs)
 }
 
-watch([note, octave], ([nextNote, nextOctave]) => {
-  clearStableNoteTimeout()
-
-  if (nextNote === '--' || !nextOctave) {
-    hideStableNoteAfterGrace()
-    return
-  }
-
-  if (nextNote === stableNote.value && nextOctave === stableOctave.value) {
-    clearStableNoteHideTimeout()
-    isPitchReadoutVisible.value = true
-    return
-  }
-
-  hideStableNoteAfterGrace()
-
-  stableNoteTimeoutId = setTimeout(() => {
-    if (note.value !== nextNote || octave.value !== nextOctave) {
-      return
-    }
-
-    clearStableNoteHideTimeout()
-    stableNote.value = nextNote
-    stableOctave.value = nextOctave
-    isPitchReadoutVisible.value = true
-    stableNoteTimeoutId = null
-  }, 1000)
-})
-
 onMounted(() => {
   const savedLanguage = localStorage.getItem('vocalwarm-language') as Language | null
   language.value = savedLanguage && supportedLanguages.includes(savedLanguage)
@@ -322,8 +261,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('keyup', handleGlobalKeyup)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
-  clearStableNoteTimeout()
-  clearStableNoteHideTimeout()
+  disposeStablePitchReadout()
   clearInactiveTabTimeout()
   disposeKeyboardAudio()
   stopListening()
