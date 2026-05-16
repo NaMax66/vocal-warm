@@ -19,6 +19,10 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `components/PitchReadout.vue`, `WarmupProgram.vue`, `NoteHoldExercise.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and guided exercises.
 - `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, instrument / sample preset selection, limiter, playback, and release timing.
 - `composables/usePitchDetector.ts` owns microphone capture and pitch detection.
+- `composables/useAppPreferences.ts` owns persisted app-level preferences and localStorage key migration.
+- `composables/useStablePitchReadout.ts` owns delayed large-note readout state and timers.
+- `composables/useSelectedNoteControls.ts` owns Space / arrow-key selected-note controls and hold state.
+- `composables/useInactiveTabStop.ts` owns the hidden-tab stop timer.
 - `utils/instrumentSamples.ts` owns sample CDN URLs, instrument definitions, and preset gains.
 - `utils/instrumentSamples.ts` exposes the keyboard instrument registry contract: each instrument provides instrument creation, gain, and attack velocity for the selected dynamic preset. Add new instruments there instead of adding instrument-specific branches to `useKeyboardAudio.ts`.
 - `plugins/register-sample-cache.client.ts` registers `/sample-cache-sw.js` so external piano sample files are cached in local development and production without intercepting app/HMR requests.
@@ -41,6 +45,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Piano output is routed through `Tone.Limiter(-1)`.
 - On preset change, the sampler is disposed, recreated, and preloaded immediately.
 - Organ does not have separate recorded velocity layers; the shared dynamic presets map to playback velocity plus gain.
+- `unlockKeyboardAudio()` is called directly from the Start click path before microphone startup so iOS Safari gets a user-gesture audio unlock before later async sample playback.
 - `isKeyboardSamplerLoading` drives the gear spinner and loading label.
 - Short taps should keep a note active for at least about `0.5s`; release is also `0.5s`.
 - `pressedMidi` highlighting is delayed to match the short-tap minimum duration.
@@ -94,6 +99,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Refactoring Direction
 
 - Keep `app.vue` as an orchestrator: top-level session state, persisted settings, microphone/audio composables, and event wiring between widgets.
+- Keep persisted app settings, readout timers, selected-note controls, and hidden-tab timers in their composables instead of growing `app.vue`.
 - Keep instrument-specific sample source and dynamic behavior behind the registry in `utils/instrumentSamples.ts`; `useKeyboardAudio.ts` should stay generic over the selected instrument.
 - Keep widget-specific behavior inside the widget component. For example, `TuningMeter.vue` owns rail geometry, target-note display logic, green-zone decisions, motion duration, direction, and scale labels.
 - Keep each exercise self-contained (`WarmupProgram.vue`, `NoteHoldExercise.vue`) with its own phase machine, prompts, timing constants, and note playback requests. Exercises should emit events instead of reaching into audio or detector composables directly.
