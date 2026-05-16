@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { copy, supportedLanguages } from '~/utils/i18n'
 import { useAppPreferences } from '~/composables/useAppPreferences'
+import { useInactiveTabStop } from '~/composables/useInactiveTabStop'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import {
   midiToDisplayNoteName,
@@ -67,8 +68,6 @@ const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
 const noteHoldTargetMidi = ref<number | null>(null)
-const inactiveTabStopDelayMs = 30000
-let inactiveTabTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
 const {
@@ -77,15 +76,7 @@ const {
   isPitchReadoutVisible,
   disposeStablePitchReadout
 } = useStablePitchReadout(note, octave, noteNotation)
-
-function clearInactiveTabTimeout() {
-  if (!inactiveTabTimeoutId) {
-    return
-  }
-
-  clearTimeout(inactiveTabTimeoutId)
-  inactiveTabTimeoutId = null
-}
+const { startInactiveTabStop, disposeInactiveTabStop } = useInactiveTabStop(isListening, stopListening)
 
 function setNoteHoldTargetMidi(midi: number | null) {
   noteHoldTargetMidi.value = midi
@@ -173,25 +164,6 @@ function handleGlobalKeyup(event: KeyboardEvent) {
   }
 }
 
-function handleVisibilityChange() {
-  if (document.visibilityState === 'visible') {
-    clearInactiveTabTimeout()
-    return
-  }
-
-  if (!isListening.value || inactiveTabTimeoutId) {
-    return
-  }
-
-  inactiveTabTimeoutId = setTimeout(() => {
-    inactiveTabTimeoutId = null
-
-    if (document.visibilityState === 'hidden' && isListening.value) {
-      stopListening()
-    }
-  }, inactiveTabStopDelayMs)
-}
-
 onMounted(() => {
   restoreAppPreferences({
     restoreKeyboardInstrument,
@@ -200,7 +172,7 @@ onMounted(() => {
 
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('keyup', handleGlobalKeyup)
-  document.addEventListener('visibilitychange', handleVisibilityChange)
+  startInactiveTabStop()
 })
 
 useHead(() => ({
@@ -213,9 +185,8 @@ useHead(() => ({
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   window.removeEventListener('keyup', handleGlobalKeyup)
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
   disposeStablePitchReadout()
-  clearInactiveTabTimeout()
+  disposeInactiveTabStop()
   disposeKeyboardAudio()
   stopListening()
 })
