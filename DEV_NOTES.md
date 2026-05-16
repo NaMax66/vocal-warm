@@ -20,14 +20,17 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, instrument / sample preset selection, limiter, playback, and release timing.
 - `composables/usePitchDetector.ts` owns microphone capture and pitch detection.
 - `utils/instrumentSamples.ts` owns sample CDN URLs, instrument definitions, and preset gains.
+- `utils/instrumentSamples.ts` exposes the keyboard instrument registry contract: each instrument provides instrument creation, gain, and attack velocity for the selected dynamic preset. Add new instruments there instead of adding instrument-specific branches to `useKeyboardAudio.ts`.
+- `plugins/register-sample-cache.client.ts` registers `/sample-cache-sw.js` so external piano sample files are cached in local development and production without intercepting app/HMR requests.
 - `utils/i18n.ts` owns RU/EN copy.
 
 ## Audio
 
-- Keyboard playback uses Salamander Grand Piano and FluidR3 GM church organ samples through `Tone.Sampler`.
+- Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
+- Organ playback uses FluidR3 GM church organ samples through a small looping sample player, because regular `Tone.Sampler` plays those soundfont samples as short one-shot buffers.
 - Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback and resumes suspended contexts. It first requests raw-ish audio with `echoCancellation`, `noiseSuppression`, and `autoGainControl` disabled, then falls back to `{ audio: true }` if those constraints fail for Apple/Safari compatibility. Sustained singing can disappear on phone browsers when default noise suppression / auto gain treats the note as background.
 - Piano samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
-- Organ samples load from `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/church_organ-mp3.js`.
+- Sample requests are cached in CacheStorage `vocalwarm-sample-cache-v1`. The service worker caches piano OGG files and the organ soundfont script so repeated local reloads avoid re-downloading them.
 - Current presets in `utils/instrumentSamples.ts`:
   - `velocity1` / Soft / ru: Myagkie / `+18 dB`
   - `velocity2` / Light / ru: Legkie / `+14 dB`
@@ -37,7 +40,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Default preset is `velocity16` unless `localStorage` has a saved choice.
 - Piano output is routed through `Tone.Limiter(-1)`.
 - On preset change, the sampler is disposed, recreated, and preloaded immediately.
-- Organ does not have separate recorded velocity layers in that soundfont; the shared dynamic presets map to organ playback velocity plus gain.
+- Organ does not have separate recorded velocity layers; the shared dynamic presets map to playback velocity plus gain.
 - `isKeyboardSamplerLoading` drives the gear spinner and loading label.
 - Short taps should keep a note active for at least about `0.5s`; release is also `0.5s`.
 - `pressedMidi` highlighting is delayed to match the short-tap minimum duration.
@@ -91,6 +94,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Refactoring Direction
 
 - Keep `app.vue` as an orchestrator: top-level session state, persisted settings, microphone/audio composables, and event wiring between widgets.
+- Keep instrument-specific sample source and dynamic behavior behind the registry in `utils/instrumentSamples.ts`; `useKeyboardAudio.ts` should stay generic over the selected instrument.
 - Keep widget-specific behavior inside the widget component. For example, `TuningMeter.vue` owns rail geometry, target-note display logic, green-zone decisions, motion duration, direction, and scale labels.
 - Keep each exercise self-contained (`WarmupProgram.vue`, `NoteHoldExercise.vue`) with its own phase machine, prompts, timing constants, and note playback requests. Exercises should emit events instead of reaching into audio or detector composables directly.
 - If exercises grow beyond a few independent components, introduce a small exercise contract or switcher around `targetMidi`, running state, prompt text, and `noteStart` / `noteEnd` events instead of expanding `app.vue`.
@@ -99,7 +103,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## TODO
 
 - Fix simultaneous piano playback and pitch detection so playing a sample does not break or confuse microphone pitch tracking.
-- Add a service worker / PWA support so the app can work as an installable PWA.
+- Add installable PWA manifest and offline app shell support.
 - Add a debug menu that works in production and can toggle key runtime settings.
 - Add keyboard blocking with clear loading text while piano samples are loading.
 - Make note central showing delay less

@@ -20,10 +20,11 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Users can switch the interface manually from the settings menu; the choice is stored in `localStorage` as `vocalwarm-language`.
 - The app uses the browser Web Audio API and `navigator.mediaDevices.getUserMedia`.
 - Keyboard note playback uses Tone.js (`tone`).
-- Keyboard playback uses Salamander Grand Piano and FluidR3 GM church organ samples through `Tone.Sampler`.
+- Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`. Organ playback uses FluidR3 GM church organ samples through a small looping sample player so held notes continue until release.
 - Piano samples are loaded from public `@audio-samples/piano-velocity*` packages on jsDelivr. Organ samples are loaded from `gleitz/midi-js-soundfonts` as `church_organ`.
 - The settings gear between `Stop` and the info button lets users choose language, note notation, instrument (`Piano` or `Organ`), and dynamic preset: `Soft` (`velocity1`, piano +18 dB), `Light` (`velocity2`, piano +14 dB), `Full` (`velocity8`, piano +8 dB), `Strong` (`velocity12`, piano +4 dB), or `Bright` (`velocity16`, piano +2 dB).
-- Piano dynamic presets use recorded velocity layers; organ dynamic presets use playback velocity and gain because the organ soundfont does not provide separate velocity-layer packages.
+- Piano dynamic presets use recorded velocity layers; organ dynamic presets use playback velocity and gain.
+- External piano and organ sample files are cached by `/sample-cache-sw.js` in local development and production.
 - The selected instrument is stored in `localStorage` as `vocalwarm-keyboard-instrument`; the selected sample preset is stored as `vocalwarm-sample-preset`. The older `vocalwarm-piano-preset` key is still read for migration.
 - The default sample preset is `Bright` (`velocity16`) unless a saved user choice exists.
 - Switching sample presets preloads the new sampler immediately and shows a small loading indicator while samples are loading.

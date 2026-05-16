@@ -1,8 +1,7 @@
 import {
-  getOrganSampleUrls,
-  getPianoSampleBaseUrl,
-  getPianoSampleUrls,
-  getSamplePreset,
+  createKeyboardInstrument,
+  getKeyboardInstrumentAttackVelocity,
+  getKeyboardInstrumentGainDb,
   keyboardInstruments,
   samplePresets,
   type KeyboardInstrumentId,
@@ -16,9 +15,9 @@ export function useKeyboardAudio() {
   const isKeyboardSamplerLoading = ref(false)
 
   let toneModule: typeof import('tone') | null = null
-  let keyboardSampler: any = null
+  let keyboardInstrument: any = null
   let keyboardLimiter: any = null
-  let keyboardSamplerLoadPromise: Promise<any> | null = null
+  let keyboardInstrumentLoadPromise: Promise<any> | null = null
   let activeKeyboardNote: string | null = null
   let activeKeyboardMidi: number | null = null
   let activeKeyboardNoteStartedAt = 0
@@ -27,14 +26,14 @@ export function useKeyboardAudio() {
   let pressedMidiTimeoutId: ReturnType<typeof setTimeout> | null = null
 
   function applyInstrumentVolume() {
-    if (!keyboardSampler) {
+    if (!keyboardInstrument) {
       return
     }
 
-    const preset = getSamplePreset(selectedSamplePresetId.value)
-    keyboardSampler.volume.value = selectedKeyboardInstrumentId.value === 'organ'
-      ? preset.organGainDb
-      : preset.pianoGainDb
+    keyboardInstrument.volume.value = getKeyboardInstrumentGainDb(
+      selectedKeyboardInstrumentId.value,
+      selectedSamplePresetId.value
+    )
   }
 
   function clearPendingRelease() {
@@ -59,11 +58,11 @@ export function useKeyboardAudio() {
   function disposeKeyboardSampler() {
     clearPendingRelease()
     clearPendingPressedMidi()
-    keyboardSampler?.dispose()
+    keyboardInstrument?.dispose()
     keyboardLimiter?.dispose()
-    keyboardSampler = null
+    keyboardInstrument = null
     keyboardLimiter = null
-    keyboardSamplerLoadPromise = null
+    keyboardInstrumentLoadPromise = null
     isKeyboardSamplerLoading.value = false
   }
 
@@ -78,7 +77,7 @@ export function useKeyboardAudio() {
   }
 
   async function loadKeyboardSampler() {
-    if (!keyboardSamplerLoadPromise) {
+    if (!keyboardInstrumentLoadPromise) {
       isKeyboardSamplerLoading.value = true
     }
 
@@ -91,27 +90,20 @@ export function useKeyboardAudio() {
       throw error
     }
 
-    if (!keyboardSamplerLoadPromise) {
+    if (!keyboardInstrumentLoadPromise) {
       try {
-        const urls = selectedKeyboardInstrumentId.value === 'organ'
-          ? await getOrganSampleUrls()
-          : getPianoSampleUrls(selectedSamplePresetId.value)
-        const baseUrl = selectedKeyboardInstrumentId.value === 'organ'
-          ? ''
-          : getPianoSampleBaseUrl(selectedSamplePresetId.value)
-
         keyboardLimiter = new Tone.Limiter(-1).toDestination()
-        keyboardSampler = new Tone.Sampler({
-          urls,
-          baseUrl,
-          attack: 0.001,
-          release: 0.5
-        }).connect(keyboardLimiter)
+        keyboardInstrument = await createKeyboardInstrument(
+          Tone,
+          selectedKeyboardInstrumentId.value,
+          selectedSamplePresetId.value
+        )
+        keyboardInstrument.connect(keyboardLimiter)
         applyInstrumentVolume()
-        keyboardSamplerLoadPromise = Tone.loaded()
+        keyboardInstrumentLoadPromise = Tone.loaded()
           .then(() => {
             isKeyboardSamplerLoading.value = false
-            return keyboardSampler
+            return keyboardInstrument
           })
           .catch((error) => {
             isKeyboardSamplerLoading.value = false
@@ -125,7 +117,7 @@ export function useKeyboardAudio() {
       }
     }
 
-    return keyboardSamplerLoadPromise
+    return keyboardInstrumentLoadPromise
   }
 
   function preloadKeyboardSampler() {
@@ -193,16 +185,14 @@ export function useKeyboardAudio() {
     const pendingReleaseNote = releaseTimeoutNote
     clearPendingRelease()
     if (pendingReleaseNote) {
-      keyboardSampler?.triggerRelease(pendingReleaseNote)
+      keyboardInstrument?.triggerRelease(pendingReleaseNote)
     }
 
     const instrument = await getKeyboardInstrument()
     instrument.triggerAttack(
       noteName,
       undefined,
-      selectedKeyboardInstrumentId.value === 'organ'
-        ? getSamplePreset(selectedSamplePresetId.value).organVelocity
-        : 1
+      getKeyboardInstrumentAttackVelocity(selectedKeyboardInstrumentId.value, selectedSamplePresetId.value)
     )
   }
 
@@ -225,7 +215,7 @@ export function useKeyboardAudio() {
 
     releaseTimeoutNote = noteName
     releaseTimeoutId = setTimeout(() => {
-      keyboardSampler?.triggerRelease(noteName)
+      keyboardInstrument?.triggerRelease(noteName)
       releaseTimeoutId = null
       releaseTimeoutNote = null
     }, releaseDelayMs)
