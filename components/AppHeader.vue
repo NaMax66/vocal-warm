@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Language } from '~/utils/i18n'
 import type { NoteNotation } from '~/composables/useNoteMath'
-import type { PianoSamplePresetId } from '~/utils/pianoSamples'
+import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 
 defineProps<{
   title: string
@@ -17,10 +17,13 @@ defineProps<{
   soundSettingsLabel: string
   soundDescription: string
   soundLoadingLabel: string
-  soundPresets: readonly { id: PianoSamplePresetId }[]
-  soundPresetLabels: Record<PianoSamplePresetId, string>
-  selectedPianoPresetId: PianoSamplePresetId
-  isPianoSamplerLoading: boolean
+  keyboardInstruments: readonly { id: KeyboardInstrumentId }[]
+  keyboardInstrumentLabels: Record<KeyboardInstrumentId, string>
+  soundPresets: readonly { id: SamplePresetId }[]
+  soundPresetLabels: Record<SamplePresetId, string>
+  selectedKeyboardInstrumentId: KeyboardInstrumentId
+  selectedSamplePresetId: SamplePresetId
+  isKeyboardSamplerLoading: boolean
   shouldShowWarmupReport: boolean
 }>()
 
@@ -28,7 +31,8 @@ defineEmits<{
   setLanguage: [language: Language]
   setNoteNotation: [notation: NoteNotation]
   stop: []
-  setPianoSamplePreset: [presetId: PianoSamplePresetId]
+  setKeyboardInstrument: [instrumentId: KeyboardInstrumentId]
+  setSamplePreset: [presetId: SamplePresetId]
   setShowWarmupReport: [value: boolean]
 }>()
 
@@ -76,7 +80,7 @@ onBeforeUnmount(() => {
         <div ref="soundMenu" class="settings-menu">
           <button
             class="icon-button settings-button"
-            :class="{ loading: isPianoSamplerLoading }"
+            :class="{ loading: isKeyboardSamplerLoading }"
             type="button"
             :aria-label="soundSettingsLabel"
             :aria-expanded="isSoundMenuOpen"
@@ -85,7 +89,7 @@ onBeforeUnmount(() => {
             <span aria-hidden="true">&#9881;</span>
           </button>
 
-          <span v-if="isPianoSamplerLoading" class="sound-loading">
+          <span v-if="isKeyboardSamplerLoading" class="sound-loading">
             {{ soundLoadingLabel }}
           </span>
 
@@ -126,16 +130,33 @@ onBeforeUnmount(() => {
               <h2>{{ soundSettingsLabel }}</h2>
               <p>{{ soundDescription }}</p>
 
+              <div class="settings-segment" aria-label="Keyboard instrument">
+                <button
+                  v-for="instrument in keyboardInstruments"
+                  :key="instrument.id"
+                  type="button"
+                  :aria-pressed="selectedKeyboardInstrumentId === instrument.id"
+                  :class="{ active: selectedKeyboardInstrumentId === instrument.id }"
+                  :disabled="isKeyboardSamplerLoading"
+                  @click="
+                    $emit('setKeyboardInstrument', instrument.id);
+                    isSoundMenuOpen = true
+                  "
+                >
+                  {{ keyboardInstrumentLabels[instrument.id] }}
+                </button>
+              </div>
+
               <div class="sample-options">
                 <button
                   v-for="preset in soundPresets"
                   :key="preset.id"
                   type="button"
-                  :aria-pressed="selectedPianoPresetId === preset.id"
-                  :class="{ active: selectedPianoPresetId === preset.id }"
-                  :disabled="isPianoSamplerLoading"
+                  :aria-pressed="selectedSamplePresetId === preset.id"
+                  :class="{ active: selectedSamplePresetId === preset.id }"
+                  :disabled="isKeyboardSamplerLoading"
                   @click="
-                    $emit('setPianoSamplePreset', preset.id);
+                    $emit('setSamplePreset', preset.id);
                     isSoundMenuOpen = true
                   "
                 >
@@ -438,6 +459,7 @@ h1 {
   text-align: center;
 }
 
+.settings-segment button:disabled,
 .sample-options button:disabled {
   cursor: wait;
   opacity: 0.56;

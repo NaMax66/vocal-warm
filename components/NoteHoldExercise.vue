@@ -172,6 +172,7 @@ onBeforeUnmount(resetExercise)
   display: grid;
   justify-items: center;
   gap: 6px;
+  margin: 8px 0;
 }
 
 .note-hold-exercise button {

@@ -17,26 +17,28 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `components/PianoKeyboard.vue` renders the scrollable C2-B6 keyboard.
 - `components/KeyboardControls.vue` renders the fixed mobile/desktop note control buttons.
 - `components/PitchReadout.vue`, `WarmupProgram.vue`, `NoteHoldExercise.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and guided exercises.
-- `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, sample preset selection, limiter, playback, and release timing.
+- `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, instrument / sample preset selection, limiter, playback, and release timing.
 - `composables/usePitchDetector.ts` owns microphone capture and pitch detection.
-- `utils/pianoSamples.ts` owns sample CDN URLs and preset gains.
+- `utils/instrumentSamples.ts` owns sample CDN URLs, instrument definitions, and preset gains.
 - `utils/i18n.ts` owns RU/EN copy.
 
 ## Audio
 
-- Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
+- Keyboard playback uses Salamander Grand Piano and FluidR3 GM church organ samples through `Tone.Sampler`.
 - Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback and resumes suspended contexts. It first requests raw-ish audio with `echoCancellation`, `noiseSuppression`, and `autoGainControl` disabled, then falls back to `{ audio: true }` if those constraints fail for Apple/Safari compatibility. Sustained singing can disappear on phone browsers when default noise suppression / auto gain treats the note as background.
-- Samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
-- Current presets in `utils/pianoSamples.ts`:
-  - `velocity1` / Soft / ru: Myagkie / `+14 dB`
-  - `velocity2` / Light / ru: Legkie / `+10 dB`
+- Piano samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
+- Organ samples load from `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/church_organ-mp3.js`.
+- Current presets in `utils/instrumentSamples.ts`:
+  - `velocity1` / Soft / ru: Myagkie / `+18 dB`
+  - `velocity2` / Light / ru: Legkie / `+14 dB`
   - `velocity8` / Full / ru: Polnye / `+8 dB`
   - `velocity12` / Strong / ru: Silnye / `+4 dB`
   - `velocity16` / Bright / ru: Yarkie / `+2 dB`
 - Default preset is `velocity16` unless `localStorage` has a saved choice.
 - Piano output is routed through `Tone.Limiter(-1)`.
 - On preset change, the sampler is disposed, recreated, and preloaded immediately.
-- `isPianoSamplerLoading` drives the gear spinner and loading label.
+- Organ does not have separate recorded velocity layers in that soundfont; the shared dynamic presets map to organ playback velocity plus gain.
+- `isKeyboardSamplerLoading` drives the gear spinner and loading label.
 - Short taps should keep a note active for at least about `0.5s`; release is also `0.5s`.
 - `pressedMidi` highlighting is delayed to match the short-tap minimum duration.
 - When Space is held and the selected note changes with arrows, the previous note should release immediately and the next selected note should start immediately.
@@ -75,14 +77,16 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `vocalwarm-language`: selected UI language.
 - `vocalwarm-note-notation`: selected note notation (`letter` or `solfege`).
 - `vocalwarm-show-warmup-report`: opens the warmup report modal after a completed warmup when set to `1`; default is off.
-- `vocalwarm-piano-preset`: selected piano sample preset.
+- `vocalwarm-keyboard-instrument`: selected keyboard instrument (`piano` or `organ`).
+- `vocalwarm-sample-preset`: selected dynamic/sample preset.
+- `vocalwarm-piano-preset`: legacy selected piano sample preset; still read as a fallback for migration.
 - `vocalwarm-selected-midi`: selected note for Space / arrow controls.
 - `vocalwarm-keyboard-scroll-left`: horizontal scroll position of the piano keyboard.
 
 ## Docs
 
 - Keep `README.md` and `README.ru.md` in sync with behavior.
-- Current README files document sample presets, localStorage keys, limiter, preload behavior, outside-click menu closing, selected-note marker, short-tap release behavior, and keyboard scroll persistence.
+- Current README files document instrument and sample presets, localStorage keys, limiter, preload behavior, outside-click menu closing, selected-note marker, short-tap release behavior, and keyboard scroll persistence.
 
 ## Refactoring Direction
 

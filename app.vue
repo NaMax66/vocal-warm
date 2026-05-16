@@ -12,7 +12,12 @@ import {
   type NoteNotation
 } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
-import { isPianoSamplePresetId, type PianoSamplePresetId } from '~/utils/pianoSamples'
+import {
+  isKeyboardInstrumentId,
+  isSamplePresetId,
+  type KeyboardInstrumentId,
+  type SamplePresetId
+} from '~/utils/instrumentSamples'
 
 const language = ref<Language>('en')
 const noteNotation = ref<NoteNotation>('letter')
@@ -37,14 +42,18 @@ const {
 
 const {
   pressedMidi,
-  pianoSamplePresets,
-  selectedPianoPresetId,
-  isPianoSamplerLoading,
+  keyboardInstruments,
+  samplePresets,
+  selectedKeyboardInstrumentId,
+  selectedSamplePresetId,
+  isKeyboardSamplerLoading,
   startKeyboardNote,
   stopKeyboardNote,
-  setPianoSamplePreset,
-  restorePianoSamplePreset,
-  preloadPianoSampler,
+  setKeyboardInstrument,
+  restoreKeyboardInstrument,
+  setSamplePreset,
+  restoreSamplePreset,
+  preloadKeyboardSampler,
   disposeKeyboardAudio
 } = useKeyboardAudio()
 
@@ -130,9 +139,15 @@ function setNoteHoldTargetMidi(midi: number | null) {
   noteHoldTargetMidi.value = midi
 }
 
-async function selectPianoSamplePreset(presetId: PianoSamplePresetId) {
+async function selectKeyboardInstrument(instrumentId: KeyboardInstrumentId) {
+  localStorage.setItem('vocalwarm-keyboard-instrument', instrumentId)
+  await setKeyboardInstrument(instrumentId)
+}
+
+async function selectSamplePreset(presetId: SamplePresetId) {
+  localStorage.setItem('vocalwarm-sample-preset', presetId)
   localStorage.setItem('vocalwarm-piano-preset', presetId)
-  await setPianoSamplePreset(presetId)
+  await setSamplePreset(presetId)
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -170,10 +185,10 @@ async function releaseSelectedNote() {
 }
 
 async function startListening() {
-  await startPitchListening(t.value.micError, preloadPianoSampler)
+  await startPitchListening(t.value.micError, preloadKeyboardSampler)
 
   if (isMicBanLayoutHackEnabled.value && !isListening.value) {
-    startMicBanLayoutHack(preloadPianoSampler)
+    startMicBanLayoutHack(preloadKeyboardSampler)
   }
 }
 
@@ -272,9 +287,14 @@ onMounted(() => {
 
   shouldShowWarmupReport.value = localStorage.getItem('vocalwarm-show-warmup-report') === '1'
 
-  const savedPianoPresetId = localStorage.getItem('vocalwarm-piano-preset')
-  if (isPianoSamplePresetId(savedPianoPresetId)) {
-    restorePianoSamplePreset(savedPianoPresetId)
+  const savedKeyboardInstrumentId = localStorage.getItem('vocalwarm-keyboard-instrument')
+  if (isKeyboardInstrumentId(savedKeyboardInstrumentId)) {
+    restoreKeyboardInstrument(savedKeyboardInstrumentId)
+  }
+
+  const savedSamplePresetId = localStorage.getItem('vocalwarm-sample-preset') ?? localStorage.getItem('vocalwarm-piano-preset')
+  if (isSamplePresetId(savedSamplePresetId)) {
+    restoreSamplePreset(savedSamplePresetId)
   }
 
   const savedSelectedMidi = Number(localStorage.getItem('vocalwarm-selected-midi'))
@@ -325,18 +345,22 @@ onBeforeUnmount(() => {
         :stop-label="t.stop"
         :is-listening="isListening"
         :sound-settings-label="t.soundSettings"
-        :sound-presets="pianoSamplePresets"
+        :keyboard-instruments="keyboardInstruments"
+        :keyboard-instrument-labels="t.keyboardInstruments"
+        :sound-presets="samplePresets"
         :sound-preset-labels="t.soundPresets"
         :sound-description="t.soundDescription"
         :sound-loading-label="t.soundLoading"
-        :selected-piano-preset-id="selectedPianoPresetId"
-        :is-piano-sampler-loading="isPianoSamplerLoading"
+        :selected-keyboard-instrument-id="selectedKeyboardInstrumentId"
+        :selected-sample-preset-id="selectedSamplePresetId"
+        :is-keyboard-sampler-loading="isKeyboardSamplerLoading"
         :should-show-warmup-report="shouldShowWarmupReport"
         @set-language="setLanguage"
         @set-note-notation="setNoteNotation"
         @set-show-warmup-report="setShowWarmupReport"
         @stop="stopListening"
-        @set-piano-sample-preset="selectPianoSamplePreset"
+        @set-keyboard-instrument="selectKeyboardInstrument"
+        @set-sample-preset="selectSamplePreset"
       />
 
       <div class="tuner-content">
