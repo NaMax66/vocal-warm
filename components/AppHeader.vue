@@ -14,9 +14,13 @@ defineProps<{
   appVersion: string
   stopLabel: string
   isListening: boolean
+  languageLabel: string
+  noteNotationLabel: string
   soundSettingsLabel: string
   soundDescription: string
   soundLoadingLabel: string
+  showWarmupReportLabel: string
+  sampleAttribution: string
   keyboardInstruments: readonly { id: KeyboardInstrumentId }[]
   keyboardInstrumentLabels: Record<KeyboardInstrumentId, string>
   soundPresets: readonly { id: SamplePresetId }[]
@@ -95,7 +99,7 @@ onBeforeUnmount(() => {
 
           <div v-if="isSoundMenuOpen" class="menu-popover settings-popover" :aria-label="soundSettingsLabel">
             <section class="settings-section">
-              <h2>{{ language === 'ru' ? 'Язык' : 'Language' }}</h2>
+              <h2>{{ languageLabel }}</h2>
               <div class="settings-segment" aria-label="Interface language">
                 <button
                   v-for="nextLanguage in languages"
@@ -111,7 +115,7 @@ onBeforeUnmount(() => {
             </section>
 
             <section class="settings-section">
-              <h2>{{ language === 'ru' ? 'Нотация' : 'Notation' }}</h2>
+              <h2>{{ noteNotationLabel }}</h2>
               <div class="settings-segment" aria-label="Note notation">
                 <button
                   v-for="nextNotation in noteNotations"
@@ -172,7 +176,7 @@ onBeforeUnmount(() => {
                   :checked="shouldShowWarmupReport"
                   @change="$emit('setShowWarmupReport', ($event.target as HTMLInputElement).checked)"
                 >
-                <span>{{ language === 'ru' ? 'Показывать отчет распевки' : 'Show warmup report' }}</span>
+                <span>{{ showWarmupReportLabel }}</span>
               </label>
             </section>
           </div>
@@ -193,13 +197,7 @@ onBeforeUnmount(() => {
             <strong>VocalWarm</strong>
             <span>{{ title }}</span>
             <span>{{ appVersion }}</span>
-            <span>
-              {{
-                language === 'ru'
-                  ? 'Сэмплы пианино: Salamander Grand Piano от Alexander Holm, лицензия CC BY 3.0.'
-                  : 'Piano samples: Salamander Grand Piano by Alexander Holm, licensed under CC BY 3.0.'
-              }}
-            </span>
+            <span>{{ sampleAttribution }}</span>
             <a :href="repoUrl" target="_blank" rel="noreferrer">repo</a>
             <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>
           </div>
