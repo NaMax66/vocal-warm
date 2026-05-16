@@ -126,6 +126,10 @@ export function useKeyboardAudio() {
     })
   }
 
+  async function unlockKeyboardAudio() {
+    await ensureTone()
+  }
+
   async function getKeyboardInstrument() {
     return loadKeyboardSampler()
   }
@@ -252,6 +256,7 @@ export function useKeyboardAudio() {
     restoreKeyboardInstrument,
     setSamplePreset,
     restoreSamplePreset,
+    unlockKeyboardAudio,
     preloadKeyboardSampler,
     disposeKeyboardAudio
   }

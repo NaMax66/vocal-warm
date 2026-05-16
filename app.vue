@@ -56,6 +56,7 @@ const {
   restoreKeyboardInstrument,
   setSamplePreset,
   restoreSamplePreset,
+  unlockKeyboardAudio,
   preloadKeyboardSampler,
   disposeKeyboardAudio
 } = useKeyboardAudio()
@@ -104,6 +105,10 @@ async function selectSamplePreset(presetId: SamplePresetId) {
 }
 
 async function startListening() {
+  await unlockKeyboardAudio().catch((error) => {
+    console.warn('Keyboard audio unlock failed', error)
+  })
+
   await startPitchListening(t.value.micError, preloadKeyboardSampler)
 
   if (isMicBanLayoutHackEnabled.value && !isListening.value) {
