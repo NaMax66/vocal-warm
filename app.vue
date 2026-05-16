@@ -1,30 +1,33 @@
 <script setup lang="ts">
-import { copy, supportedLanguages, type Language } from '~/utils/i18n'
+import { copy, supportedLanguages } from '~/utils/i18n'
+import { useAppPreferences } from '~/composables/useAppPreferences'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import {
-  keyboardMaxMidi,
-  keyboardMinMidi,
   midiToDisplayNoteName,
   midiToNoteName,
   noteNotationLabels,
   noteNotations,
-  type NoteNotation
 } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
 import { useStablePitchReadout } from '~/composables/useStablePitchReadout'
-import {
-  isKeyboardInstrumentId,
-  isSamplePresetId,
-  type KeyboardInstrumentId,
-  type SamplePresetId
-} from '~/utils/instrumentSamples'
+import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 
-const language = ref<Language>('en')
-const noteNotation = ref<NoteNotation>('letter')
-const selectedMidi = ref(60)
-const shouldShowWarmupReport = ref(false)
 const isSliderHolding = ref(false)
 const runtimeConfig = useRuntimeConfig()
+
+const {
+  language,
+  noteNotation,
+  selectedMidi,
+  shouldShowWarmupReport,
+  setLanguage,
+  setNoteNotation,
+  setShowWarmupReport,
+  setSelectedMidi,
+  persistKeyboardInstrument,
+  persistSamplePreset,
+  restoreAppPreferences
+} = useAppPreferences()
 
 const {
   isListening,
@@ -84,37 +87,17 @@ function clearInactiveTabTimeout() {
   inactiveTabTimeoutId = null
 }
 
-function resolveLanguage(browserLanguage: string | undefined): Language {
-  return browserLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
-}
-
-function setLanguage(nextLanguage: Language) {
-  language.value = nextLanguage
-  localStorage.setItem('vocalwarm-language', nextLanguage)
-}
-
-function setNoteNotation(nextNotation: NoteNotation) {
-  noteNotation.value = nextNotation
-  localStorage.setItem('vocalwarm-note-notation', nextNotation)
-}
-
-function setShowWarmupReport(value: boolean) {
-  shouldShowWarmupReport.value = value
-  localStorage.setItem('vocalwarm-show-warmup-report', value ? '1' : '0')
-}
-
 function setNoteHoldTargetMidi(midi: number | null) {
   noteHoldTargetMidi.value = midi
 }
 
 async function selectKeyboardInstrument(instrumentId: KeyboardInstrumentId) {
-  localStorage.setItem('vocalwarm-keyboard-instrument', instrumentId)
+  persistKeyboardInstrument(instrumentId)
   await setKeyboardInstrument(instrumentId)
 }
 
 async function selectSamplePreset(presetId: SamplePresetId) {
-  localStorage.setItem('vocalwarm-sample-preset', presetId)
-  localStorage.setItem('vocalwarm-piano-preset', presetId)
+  persistSamplePreset(presetId)
   await setSamplePreset(presetId)
 }
 
@@ -127,11 +110,7 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 async function stepSelectedMidi(direction: number) {
-  selectedMidi.value = Math.max(
-    keyboardMinMidi,
-    Math.min(keyboardMaxMidi, selectedMidi.value + direction)
-  )
-  localStorage.setItem('vocalwarm-selected-midi', String(selectedMidi.value))
+  setSelectedMidi(selectedMidi.value + direction)
 
   if (isSliderHolding.value) {
     await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
@@ -214,36 +193,10 @@ function handleVisibilityChange() {
 }
 
 onMounted(() => {
-  const savedLanguage = localStorage.getItem('vocalwarm-language') as Language | null
-  language.value = savedLanguage && supportedLanguages.includes(savedLanguage)
-    ? savedLanguage
-    : resolveLanguage(navigator.language)
-
-  const savedNoteNotation = localStorage.getItem('vocalwarm-note-notation') as NoteNotation | null
-  if (savedNoteNotation && noteNotations.includes(savedNoteNotation)) {
-    noteNotation.value = savedNoteNotation
-  }
-
-  shouldShowWarmupReport.value = localStorage.getItem('vocalwarm-show-warmup-report') === '1'
-
-  const savedKeyboardInstrumentId = localStorage.getItem('vocalwarm-keyboard-instrument')
-  if (isKeyboardInstrumentId(savedKeyboardInstrumentId)) {
-    restoreKeyboardInstrument(savedKeyboardInstrumentId)
-  }
-
-  const savedSamplePresetId = localStorage.getItem('vocalwarm-sample-preset') ?? localStorage.getItem('vocalwarm-piano-preset')
-  if (isSamplePresetId(savedSamplePresetId)) {
-    restoreSamplePreset(savedSamplePresetId)
-  }
-
-  const savedSelectedMidi = Number(localStorage.getItem('vocalwarm-selected-midi'))
-  if (
-    Number.isInteger(savedSelectedMidi)
-    && savedSelectedMidi >= keyboardMinMidi
-    && savedSelectedMidi <= keyboardMaxMidi
-  ) {
-    selectedMidi.value = savedSelectedMidi
-  }
+  restoreAppPreferences({
+    restoreKeyboardInstrument,
+    restoreSamplePreset
+  })
 
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('keyup', handleGlobalKeyup)
