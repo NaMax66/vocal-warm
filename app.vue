@@ -5,15 +5,14 @@ import { useInactiveTabStop } from '~/composables/useInactiveTabStop'
 import { useKeyboardAudio } from '~/composables/useKeyboardAudio'
 import {
   midiToDisplayNoteName,
-  midiToNoteName,
   noteNotationLabels,
   noteNotations,
 } from '~/composables/useNoteMath'
 import { usePitchDetector } from '~/composables/usePitchDetector'
+import { useSelectedNoteControls } from '~/composables/useSelectedNoteControls'
 import { useStablePitchReadout } from '~/composables/useStablePitchReadout'
 import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 
-const isSliderHolding = ref(false)
 const runtimeConfig = useRuntimeConfig()
 
 const {
@@ -65,7 +64,6 @@ const t = computed(() => copy[language.value])
 const appVersion = computed(() => String(runtimeConfig.public.appVersion || 'dev'))
 const isMicBanLayoutHackEnabled = computed(() => String(runtimeConfig.public.micBanLayoutHack) === '1')
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
-const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
 const noteHoldTargetMidi = ref<number | null>(null)
 
@@ -77,6 +75,19 @@ const {
   disposeStablePitchReadout
 } = useStablePitchReadout(note, octave, noteNotation)
 const { startInactiveTabStop, disposeInactiveTabStop } = useInactiveTabStop(isListening, stopListening)
+const {
+  stepSelectedMidi,
+  holdSelectedNote,
+  releaseSelectedNote,
+  startSelectedNoteControls,
+  disposeSelectedNoteControls
+} = useSelectedNoteControls(
+  isListening,
+  selectedMidi,
+  setSelectedMidi,
+  startKeyboardNote,
+  stopKeyboardNote
+)
 
 function setNoteHoldTargetMidi(midi: number | null) {
   noteHoldTargetMidi.value = midi
@@ -92,75 +103,11 @@ async function selectSamplePreset(presetId: SamplePresetId) {
   await setSamplePreset(presetId)
 }
 
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
-}
-
-async function stepSelectedMidi(direction: number) {
-  setSelectedMidi(selectedMidi.value + direction)
-
-  if (isSliderHolding.value) {
-    await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
-  }
-}
-
-async function holdSelectedNote() {
-  if (isSliderHolding.value) {
-    return
-  }
-
-  isSliderHolding.value = true
-  await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
-}
-
-async function releaseSelectedNote() {
-  isSliderHolding.value = false
-  await stopKeyboardNote()
-}
-
 async function startListening() {
   await startPitchListening(t.value.micError, preloadKeyboardSampler)
 
   if (isMicBanLayoutHackEnabled.value && !isListening.value) {
     startMicBanLayoutHack(preloadKeyboardSampler)
-  }
-}
-
-function handleGlobalKeydown(event: KeyboardEvent) {
-  if (!isListening.value || isEditableTarget(event.target)) {
-    return
-  }
-
-  if (event.key === 'ArrowLeft') {
-    event.preventDefault()
-    stepSelectedMidi(-1)
-    return
-  }
-
-  if (event.key === 'ArrowRight') {
-    event.preventDefault()
-    stepSelectedMidi(1)
-    return
-  }
-
-  if (event.code === 'Space' && !event.repeat) {
-    event.preventDefault()
-    holdSelectedNote()
-  }
-}
-
-function handleGlobalKeyup(event: KeyboardEvent) {
-  if (!isListening.value || isEditableTarget(event.target)) {
-    return
-  }
-
-  if (event.code === 'Space') {
-    event.preventDefault()
-    releaseSelectedNote()
   }
 }
 
@@ -170,8 +117,7 @@ onMounted(() => {
     restoreSamplePreset
   })
 
-  window.addEventListener('keydown', handleGlobalKeydown)
-  window.addEventListener('keyup', handleGlobalKeyup)
+  startSelectedNoteControls()
   startInactiveTabStop()
 })
 
@@ -183,8 +129,7 @@ useHead(() => ({
 }))
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
-  window.removeEventListener('keyup', handleGlobalKeyup)
+  disposeSelectedNoteControls()
   disposeStablePitchReadout()
   disposeInactiveTabStop()
   disposeKeyboardAudio()
