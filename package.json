@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev",
+    "dev:localnet": "set NODE_TLS_REJECT_UNAUTHORIZED=0&& set NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK=0&& nuxt dev --host 0.0.0.0 --port 3000 --https --qr",
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview"
