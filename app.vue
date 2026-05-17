@@ -11,6 +11,7 @@ import {
 import { usePitchDetector } from '~/composables/usePitchDetector'
 import { useSelectedNoteControls } from '~/composables/useSelectedNoteControls'
 import { useStablePitchReadout } from '~/composables/useStablePitchReadout'
+import type { PianoKeyboardApi } from '~/components/PianoKeyboard.vue'
 import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 
 const runtimeConfig = useRuntimeConfig()
@@ -67,6 +68,7 @@ const isMicBanLayoutHackEnabled = computed(() => String(runtimeConfig.public.mic
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
 const noteHoldTargetMidi = ref<number | null>(null)
+const pianoKeyboard = ref<PianoKeyboardApi | null>(null)
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
 const {
@@ -87,7 +89,11 @@ const {
   selectedMidi,
   setSelectedMidi,
   startKeyboardNote,
-  stopKeyboardNote
+  stopKeyboardNote,
+  (midi) => pianoKeyboard.value?.scrollMidiIntoView(midi, {
+    onlyIfNeeded: true,
+    marginPx: 44
+  })
 )
 
 function setNoteHoldTargetMidi(midi: number | null) {
@@ -114,6 +120,12 @@ async function startListening() {
   if (isMicBanLayoutHackEnabled.value && !isListening.value) {
     startMicBanLayoutHack(preloadKeyboardSampler)
   }
+}
+
+function focusWarmupKeyboardRange(fromMidi: number, toMidi: number) {
+  pianoKeyboard.value?.scrollMidiRangeIntoView(fromMidi, toMidi, {
+    marginPx: 48
+  })
 }
 
 onMounted(() => {
@@ -199,6 +211,7 @@ onBeforeUnmount(() => {
           :should-show-report="shouldShowWarmupReport"
           @note-start="startKeyboardNote"
           @note-end="stopKeyboardNote"
+          @warmup-range-focus="focusWarmupKeyboardRange"
         />
 
         <NoteHoldExercise
@@ -220,6 +233,7 @@ onBeforeUnmount(() => {
 
         <div class="keyboard-dock">
           <PianoKeyboard
+            ref="pianoKeyboard"
             :detected-midi="activeMidi"
             :pressed-midi="pressedMidi"
             :selected-midi="selectedMidi"

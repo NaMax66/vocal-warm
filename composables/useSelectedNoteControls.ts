@@ -2,6 +2,7 @@ import { midiToNoteName } from '~/composables/useNoteMath'
 
 type StartKeyboardNote = (noteName: string, midi: number) => Promise<void>
 type StopKeyboardNote = () => Promise<void>
+type SelectedNotePlayedCallback = (midi: number) => void
 
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
@@ -16,7 +17,8 @@ export function useSelectedNoteControls(
   selectedMidi: Ref<number>,
   setSelectedMidi: (midi: number) => void,
   startKeyboardNote: StartKeyboardNote,
-  stopKeyboardNote: StopKeyboardNote
+  stopKeyboardNote: StopKeyboardNote,
+  onSelectedNotePlayed?: SelectedNotePlayedCallback
 ) {
   const isSelectedNoteHolding = ref(false)
   const selectedNoteLabel = computed(() => midiToNoteName(selectedMidi.value))
@@ -25,6 +27,7 @@ export function useSelectedNoteControls(
     setSelectedMidi(selectedMidi.value + direction)
 
     if (isSelectedNoteHolding.value) {
+      onSelectedNotePlayed?.(selectedMidi.value)
       await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
     }
   }
@@ -35,6 +38,7 @@ export function useSelectedNoteControls(
     }
 
     isSelectedNoteHolding.value = true
+    onSelectedNotePlayed?.(selectedMidi.value)
     await startKeyboardNote(selectedNoteLabel.value, selectedMidi.value)
   }
 

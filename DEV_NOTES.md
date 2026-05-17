@@ -16,6 +16,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `app.vue` wires the screen together and owns top-level UI state.
 - `components/AppHeader.vue` contains the `Stop` button, a wide settings gear menu for language / note notation / samples, and the info popover.
 - `components/PianoKeyboard.vue` renders the scrollable C2-B6 keyboard.
+- `components/PianoKeyboard.vue` exposes scroll helpers for non-invasive keyboard navigation: center a note range before warmups and bring the selected Space note into view only when it is currently offscreen.
 - `components/KeyboardControls.vue` renders the fixed mobile/desktop note control buttons.
 - `components/PitchReadout.vue`, `WarmupProgram.vue`, `NoteHoldExercise.vue`, `TuningMeter.vue`, and `VolumeMeter.vue` render tuner feedback and guided exercises.
 - `composables/useKeyboardAudio.ts` owns Tone.js loading, sampler preload, instrument / sample preset selection, limiter, playback, and release timing.
@@ -80,6 +81,8 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Button text selection is disabled globally.
 - Mobile viewport scaling is disabled with `maximum-scale=1, user-scalable=no`.
 - Mobile long-press browser effects are suppressed on note/control buttons with `touch-action`, disabled callout, transparent tap highlight, and prevented context menus where notes are held.
+- Mobile landscape keeps page vertical scrolling available and the piano keyboard uses native horizontal pan / momentum scroll.
+- Warmup start asks `PianoKeyboard.vue` to smoothly center the full upcoming melody range. Space / arrow selected-note playback asks the keyboard to scroll only if the played note is currently outside the visible keyboard viewport.
 
 ## Local Storage
 
@@ -103,6 +106,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Keep persisted app settings, readout timers, selected-note controls, and hidden-tab timers in their composables instead of growing `app.vue`.
 - Keep instrument-specific sample source and dynamic behavior behind the registry in `utils/instrumentSamples.ts`; `useKeyboardAudio.ts` should stay generic over the selected instrument.
 - Keep widget-specific behavior inside the widget component. For example, `TuningMeter.vue` owns rail geometry, target-note display logic, green-zone decisions, motion duration, direction, and scale labels.
+- Keep keyboard scroll math inside `PianoKeyboard.vue`; parent components should use its exposed methods instead of querying key DOM directly.
 - Keep each exercise self-contained (`WarmupProgram.vue`, `NoteHoldExercise.vue`) with its own phase machine, prompts, timing constants, and note playback requests. Exercises should emit events instead of reaching into audio or detector composables directly.
 - If exercises grow beyond a few independent components, introduce a small exercise contract or switcher around `targetMidi`, running state, prompt text, and `noteStart` / `noteEnd` events instead of expanding `app.vue`.
 - Move new RU/EN strings toward `utils/i18n.ts` when the copy stabilizes; short experimental exercise labels may live locally while behavior is still being shaped.

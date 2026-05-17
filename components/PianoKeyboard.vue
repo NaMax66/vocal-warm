@@ -21,6 +21,17 @@ const emit = defineEmits<{
   noteEnd: [note: string, midi: number]
 }>()
 
+export type PianoKeyboardScrollOptions = {
+  onlyIfNeeded?: boolean
+  marginPx?: number
+  behavior?: ScrollBehavior
+}
+
+export type PianoKeyboardApi = {
+  scrollMidiIntoView: (midi: number, options?: PianoKeyboardScrollOptions) => void
+  scrollMidiRangeIntoView: (fromMidi: number, toMidi: number, options?: PianoKeyboardScrollOptions) => void
+}
+
 function startNote(note: string, midi: number) {
   emit('noteStart', note, midi)
 }
@@ -101,6 +112,92 @@ function saveKeyboardScroll() {
   localStorage.setItem(keyboardScrollStorageKey, String(Math.round(keyboardWrap.value.scrollLeft)))
 }
 
+function getKeyElement(midi: number) {
+  return keyboardWrap.value?.querySelector<HTMLElement>(`[data-midi="${midi}"]`) ?? null
+}
+
+function getClampedScrollLeft(scrollLeft: number) {
+  if (!keyboardWrap.value) {
+    return scrollLeft
+  }
+
+  const maxScrollLeft = keyboardWrap.value.scrollWidth - keyboardWrap.value.clientWidth
+
+  return Math.max(0, Math.min(maxScrollLeft, scrollLeft))
+}
+
+function scrollToLeft(scrollLeft: number, behavior: ScrollBehavior) {
+  keyboardWrap.value?.scrollTo({
+    left: getClampedScrollLeft(scrollLeft),
+    behavior
+  })
+}
+
+function isKeyVisible(keyElement: HTMLElement, marginPx: number) {
+  if (!keyboardWrap.value) {
+    return true
+  }
+
+  const visibleLeft = keyboardWrap.value.scrollLeft + marginPx
+  const visibleRight = keyboardWrap.value.scrollLeft + keyboardWrap.value.clientWidth - marginPx
+  const keyLeft = keyElement.offsetLeft
+  const keyRight = keyLeft + keyElement.offsetWidth
+
+  return keyLeft >= visibleLeft && keyRight <= visibleRight
+}
+
+function scrollMidiIntoView(midi: number, options: PianoKeyboardScrollOptions = {}) {
+  if (!keyboardWrap.value) {
+    return
+  }
+
+  const keyElement = getKeyElement(midi)
+  if (!keyElement) {
+    return
+  }
+
+  const marginPx = options.marginPx ?? 28
+  if (options.onlyIfNeeded && isKeyVisible(keyElement, marginPx)) {
+    return
+  }
+
+  const keyCenter = keyElement.offsetLeft + keyElement.offsetWidth / 2
+  scrollToLeft(keyCenter - keyboardWrap.value.clientWidth / 2, options.behavior ?? 'smooth')
+}
+
+function scrollMidiRangeIntoView(fromMidi: number, toMidi: number, options: PianoKeyboardScrollOptions = {}) {
+  if (!keyboardWrap.value) {
+    return
+  }
+
+  const fromKey = getKeyElement(fromMidi)
+  const toKey = getKeyElement(toMidi)
+  if (!fromKey || !toKey) {
+    return
+  }
+
+  const marginPx = options.marginPx ?? 36
+  const rangeLeft = Math.min(fromKey.offsetLeft, toKey.offsetLeft)
+  const rangeRight = Math.max(
+    fromKey.offsetLeft + fromKey.offsetWidth,
+    toKey.offsetLeft + toKey.offsetWidth
+  )
+  const visibleLeft = keyboardWrap.value.scrollLeft + marginPx
+  const visibleRight = keyboardWrap.value.scrollLeft + keyboardWrap.value.clientWidth - marginPx
+
+  if (options.onlyIfNeeded && rangeLeft >= visibleLeft && rangeRight <= visibleRight) {
+    return
+  }
+
+  const rangeCenter = (rangeLeft + rangeRight) / 2
+  scrollToLeft(rangeCenter - keyboardWrap.value.clientWidth / 2, options.behavior ?? 'smooth')
+}
+
+defineExpose<PianoKeyboardApi>({
+  scrollMidiIntoView,
+  scrollMidiRangeIntoView
+})
+
 onMounted(async () => {
   await nextTick()
   centerKeyboardScroll()
@@ -129,6 +226,7 @@ onBeforeUnmount(() => {
             combined: key.isCombined,
             'voice-release': key.isVoiceRelease
           }"
+          :data-midi="key.midi"
           :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.soundLabel, key.midi)"
@@ -157,6 +255,7 @@ onBeforeUnmount(() => {
             'voice-release': key.isVoiceRelease
           }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
+          :data-midi="key.midi"
           :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.soundLabel, key.midi)"

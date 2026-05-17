@@ -23,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   noteStart: [note: string, midi: number]
   noteEnd: [note: string, midi: number]
+  warmupRangeFocus: [fromMidi: number, toMidi: number]
 }>()
 
 type WarmupDirection = 'up' | 'down'
@@ -248,6 +249,13 @@ async function startWarmup() {
   if (!canStart.value) {
     return
   }
+
+  const warmupRangeStartMidi = selectedStartMidi.value
+  const warmupRangeEndMidi = selectedStartMidi.value
+    + defaultRoundCount - 1
+    + warmupStepIntervals[selectedPatternLength.value - 1]
+  emit('warmupRangeFocus', warmupRangeStartMidi, warmupRangeEndMidi)
+  await nextTick()
 
   isCancelled = false
   phase.value = 'playing'
