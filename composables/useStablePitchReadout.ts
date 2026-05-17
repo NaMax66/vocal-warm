@@ -1,5 +1,8 @@
 import { noteNameToDisplayName, type NoteNotation } from '~/composables/useNoteMath'
 
+export const pitchReadoutAppearDelayMs = 300
+export const pitchReadoutDisappearDelayMs = 0
+
 export function useStablePitchReadout(
   note: Ref<string>,
   octave: Ref<string>,
@@ -14,8 +17,6 @@ export function useStablePitchReadout(
       : noteNameToDisplayName(stableNote.value, noteNotation.value)
   ))
 
-  const pitchReadoutDelayMs = 1000
-  const pitchReadoutGraceMs = 900
   let stableNoteTimeoutId: ReturnType<typeof setTimeout> | null = null
   let stableNoteHideTimeoutId: ReturnType<typeof setTimeout> | null = null
 
@@ -40,12 +41,19 @@ export function useStablePitchReadout(
   function hideStableNoteAfterGrace() {
     clearStableNoteHideTimeout()
 
+    if (pitchReadoutDisappearDelayMs <= 0) {
+      isPitchReadoutVisible.value = false
+      stableNote.value = '--'
+      stableOctave.value = ''
+      return
+    }
+
     stableNoteHideTimeoutId = setTimeout(() => {
       isPitchReadoutVisible.value = false
       stableNote.value = '--'
       stableOctave.value = ''
       stableNoteHideTimeoutId = null
-    }, pitchReadoutGraceMs)
+    }, pitchReadoutDisappearDelayMs)
   }
 
   const stopStablePitchWatch = watch([note, octave], ([nextNote, nextOctave]) => {
@@ -74,7 +82,7 @@ export function useStablePitchReadout(
       stableOctave.value = nextOctave
       isPitchReadoutVisible.value = true
       stableNoteTimeoutId = null
-    }, pitchReadoutDelayMs)
+    }, pitchReadoutAppearDelayMs)
   })
 
   function disposeStablePitchReadout() {

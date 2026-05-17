@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const pitchReadoutFadeInMs = 300
+
 defineProps<{
   note: string
   octave: string
@@ -7,7 +9,12 @@ defineProps<{
 </script>
 
 <template>
-  <div class="readout" :class="{ visible: isVisible }" aria-live="polite">
+  <div
+    class="readout"
+    :class="{ visible: isVisible }"
+    :style="{ '--pitch-readout-fade-in-ms': `${pitchReadoutFadeInMs}ms` }"
+    aria-live="polite"
+  >
     <span class="note">{{ note }}</span>
     <span class="octave">{{ octave }}</span>
   </div>
@@ -23,12 +30,11 @@ defineProps<{
   color: #162c39;
   overflow: hidden;
   opacity: 0;
-  transition: none;
 }
 
 .readout.visible {
   opacity: 1;
-  transition: opacity 640ms ease;
+  animation: pitch-readout-fade-in var(--pitch-readout-fade-in-ms) ease both;
 }
 
 .note {
@@ -43,6 +49,16 @@ defineProps<{
   color: #277a73;
   font-size: clamp(2rem, 6vw, 3.8rem);
   font-weight: 850;
+}
+
+@keyframes pitch-readout-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 900px), (max-width: 1200px) and (max-height: 900px) {
