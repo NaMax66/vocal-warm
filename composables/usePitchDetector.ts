@@ -19,6 +19,7 @@ export function usePitchDetector() {
   let animationId = 0
   let sampleBuffer: Float32Array | null = null
   let micBanLayoutHackIntervalId: ReturnType<typeof setInterval> | null = null
+  let silentFrameCount = 0
 
   function resolveAudioContextCtor() {
     return window.AudioContext || (window as typeof window & {
@@ -39,6 +40,24 @@ export function usePitchDetector() {
       console.warn('Raw microphone constraints failed, falling back to default audio', error)
       return navigator.mediaDevices.getUserMedia({ audio: true })
     }
+  }
+
+  async function resumeAudioContext() {
+    if (audioContext?.state === 'suspended') {
+      await audioContext.resume()
+    }
+  }
+
+  function logMicrophoneDiagnostics() {
+    const track = stream?.getAudioTracks()[0]
+    console.info('Microphone diagnostics', {
+      audioContextState: audioContext?.state,
+      sampleRate: audioContext?.sampleRate,
+      trackEnabled: track?.enabled,
+      trackMuted: track?.muted,
+      trackReadyState: track?.readyState,
+      trackSettings: track?.getSettings?.()
+    })
   }
 
   function autoCorrelate(buffer: Float32Array, sampleRate: number) {
@@ -137,8 +156,26 @@ export function usePitchDetector() {
       return
     }
 
+    if (audioContext.state === 'suspended') {
+      resumeAudioContext().catch((error) => {
+        console.warn('Microphone AudioContext resume failed', error)
+      })
+      animationId = requestAnimationFrame(tick)
+      return
+    }
+
     analyser.getFloatTimeDomainData(sampleBuffer)
     updateNoteFromFrequency(autoCorrelate(sampleBuffer, audioContext.sampleRate))
+
+    if (volume.value <= 0.0001) {
+      silentFrameCount += 1
+      if (silentFrameCount === 180) {
+        logMicrophoneDiagnostics()
+      }
+    } else {
+      silentFrameCount = 0
+    }
+
     animationId = requestAnimationFrame(tick)
   }
 
@@ -158,9 +195,7 @@ export function usePitchDetector() {
 
       audioContext = new AudioContextCtor()
 
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume()
-      }
+      await resumeAudioContext()
 
       stream = await getMicrophoneStream()
       analyser = audioContext.createAnalyser()
@@ -168,6 +203,8 @@ export function usePitchDetector() {
       sampleBuffer = new Float32Array(analyser.fftSize)
       source = audioContext.createMediaStreamSource(stream)
       source.connect(analyser)
+      await resumeAudioContext()
+      logMicrophoneDiagnostics()
       isListening.value = true
       statusKey.value = 'listening'
       onStarted?.()
@@ -209,6 +246,7 @@ export function usePitchDetector() {
     source = null
     stream = null
     sampleBuffer = null
+    silentFrameCount = 0
     isListening.value = false
     frequency.value = null
     volume.value = 0
