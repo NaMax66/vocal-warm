@@ -412,7 +412,12 @@ button {
 
 .tuner.pitch-keyboard-view .volume,
 .tuner.pitch-keyboard-view .warmup-program,
-.tuner.pitch-keyboard-view .note-hold-exercise {
+.tuner.pitch-keyboard-view .note-hold-exercise,
+.tuner.pitch-keyboard-view .keyboard-control-pad {
+  display: none;
+}
+
+.tuner.pitch-keyboard-view .piano-key.selected::after {
   display: none;
 }
 
