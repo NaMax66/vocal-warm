@@ -27,7 +27,17 @@ export function usePitchDetector() {
     }).webkitAudioContext
   }
 
+  function isIOSDevice() {
+    const userAgent = navigator.userAgent
+    return /iP(?:ad|hone|od)/.test(userAgent)
+      || (navigator.maxTouchPoints > 2 && /Macintosh/.test(userAgent))
+  }
+
   async function getMicrophoneStream() {
+    if (isIOSDevice()) {
+      return navigator.mediaDevices.getUserMedia({ audio: true })
+    }
+
     try {
       return await navigator.mediaDevices.getUserMedia({
         audio: {
