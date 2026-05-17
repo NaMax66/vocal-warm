@@ -159,37 +159,46 @@ onBeforeUnmount(() => {
     <section class="tuner" :class="{ inactive: !isListening }">
       <AppHeader
         :title="t.title"
-        :language="language"
-        :languages="supportedLanguages"
-        :note-notation="noteNotation"
-        :note-notations="noteNotations"
-        :note-notation-labels="noteNotationLabels"
-        :repo-url="repoUrl"
-        :app-version="appVersion"
         :stop-label="t.stop"
         :is-listening="isListening"
-        :language-label="t.languageLabel"
-        :note-notation-label="t.noteNotationLabel"
-        :sound-settings-label="t.soundSettings"
-        :keyboard-instruments="keyboardInstruments"
-        :keyboard-instrument-labels="t.keyboardInstruments"
-        :sound-presets="samplePresets"
-        :sound-preset-labels="t.soundPresets"
-        :sound-description="t.soundDescription"
-        :sound-loading-label="t.soundLoading"
-        :show-warmup-report-label="t.showWarmupReport"
-        :sample-attribution="t.sampleAttribution"
-        :selected-keyboard-instrument-id="selectedKeyboardInstrumentId"
-        :selected-sample-preset-id="selectedSamplePresetId"
-        :is-keyboard-sampler-loading="isKeyboardSamplerLoading"
-        :should-show-warmup-report="shouldShowWarmupReport"
-        @set-language="setLanguage"
-        @set-note-notation="setNoteNotation"
-        @set-show-warmup-report="setShowWarmupReport"
         @stop="stopListening"
-        @set-keyboard-instrument="selectKeyboardInstrument"
-        @set-sample-preset="selectSamplePreset"
-      />
+      >
+        <template #controls>
+          <HeaderSoundSettings
+            :language="language"
+            :languages="supportedLanguages"
+            :note-notation="noteNotation"
+            :note-notations="noteNotations"
+            :note-notation-labels="noteNotationLabels"
+            :language-label="t.languageLabel"
+            :note-notation-label="t.noteNotationLabel"
+            :sound-settings-label="t.soundSettings"
+            :sound-description="t.soundDescription"
+            :sound-loading-label="t.soundLoading"
+            :show-warmup-report-label="t.showWarmupReport"
+            :keyboard-instruments="keyboardInstruments"
+            :keyboard-instrument-labels="t.keyboardInstruments"
+            :sound-presets="samplePresets"
+            :sound-preset-labels="t.soundPresets"
+            :selected-keyboard-instrument-id="selectedKeyboardInstrumentId"
+            :selected-sample-preset-id="selectedSamplePresetId"
+            :is-keyboard-sampler-loading="isKeyboardSamplerLoading"
+            :should-show-warmup-report="shouldShowWarmupReport"
+            @set-language="setLanguage"
+            @set-note-notation="setNoteNotation"
+            @set-keyboard-instrument="selectKeyboardInstrument"
+            @set-sample-preset="selectSamplePreset"
+            @set-show-warmup-report="setShowWarmupReport"
+          />
+
+          <HeaderInfoMenu
+            :title="t.title"
+            :repo-url="repoUrl"
+            :app-version="appVersion"
+            :sample-attribution="t.sampleAttribution"
+          />
+        </template>
+      </AppHeader>
 
       <div class="tuner-content">
 

@@ -1,43 +1,12 @@
 <script setup lang="ts">
-import type { Language } from '~/utils/i18n'
-import type { NoteNotation } from '~/composables/useNoteMath'
-import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
-
 defineProps<{
   title: string
-  language: Language
-  languages: readonly Language[]
-  noteNotation: NoteNotation
-  noteNotations: readonly NoteNotation[]
-  noteNotationLabels: Record<NoteNotation, string>
-  repoUrl: string
-  appVersion: string
   stopLabel: string
   isListening: boolean
-  languageLabel: string
-  noteNotationLabel: string
-  soundSettingsLabel: string
-  soundDescription: string
-  soundLoadingLabel: string
-  showWarmupReportLabel: string
-  sampleAttribution: string
-  keyboardInstruments: readonly { id: KeyboardInstrumentId }[]
-  keyboardInstrumentLabels: Record<KeyboardInstrumentId, string>
-  soundPresets: readonly { id: SamplePresetId }[]
-  soundPresetLabels: Record<SamplePresetId, string>
-  selectedKeyboardInstrumentId: KeyboardInstrumentId
-  selectedSamplePresetId: SamplePresetId
-  isKeyboardSamplerLoading: boolean
-  shouldShowWarmupReport: boolean
 }>()
 
 defineEmits<{
-  setLanguage: [language: Language]
-  setNoteNotation: [notation: NoteNotation]
   stop: []
-  setKeyboardInstrument: [instrumentId: KeyboardInstrumentId]
-  setSamplePreset: [presetId: SamplePresetId]
-  setShowWarmupReport: [value: boolean]
 }>()
 </script>
 
@@ -56,39 +25,7 @@ defineEmits<{
           {{ stopLabel }}
         </button>
 
-        <HeaderSoundSettings
-          :language="language"
-          :languages="languages"
-          :note-notation="noteNotation"
-          :note-notations="noteNotations"
-          :note-notation-labels="noteNotationLabels"
-          :language-label="languageLabel"
-          :note-notation-label="noteNotationLabel"
-          :sound-settings-label="soundSettingsLabel"
-          :sound-description="soundDescription"
-          :sound-loading-label="soundLoadingLabel"
-          :show-warmup-report-label="showWarmupReportLabel"
-          :keyboard-instruments="keyboardInstruments"
-          :keyboard-instrument-labels="keyboardInstrumentLabels"
-          :sound-presets="soundPresets"
-          :sound-preset-labels="soundPresetLabels"
-          :selected-keyboard-instrument-id="selectedKeyboardInstrumentId"
-          :selected-sample-preset-id="selectedSamplePresetId"
-          :is-keyboard-sampler-loading="isKeyboardSamplerLoading"
-          :should-show-warmup-report="shouldShowWarmupReport"
-          @set-language="$emit('setLanguage', $event)"
-          @set-note-notation="$emit('setNoteNotation', $event)"
-          @set-keyboard-instrument="$emit('setKeyboardInstrument', $event)"
-          @set-sample-preset="$emit('setSamplePreset', $event)"
-          @set-show-warmup-report="$emit('setShowWarmupReport', $event)"
-        />
-
-        <HeaderInfoMenu
-          :title="title"
-          :repo-url="repoUrl"
-          :app-version="appVersion"
-          :sample-attribution="sampleAttribution"
-        />
+        <slot name="controls" />
       </div>
     </div>
   </div>
