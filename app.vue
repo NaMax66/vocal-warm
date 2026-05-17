@@ -403,6 +403,43 @@ button {
   }
 }
 
+@media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .page-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .tuner {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .tuner-content {
+    grid-template-rows:
+      minmax(34px, auto)
+      minmax(58px, auto)
+      auto
+      minmax(42px, auto)
+      auto;
+    gap: 4px;
+  }
+
+  .keyboard-dock {
+    position: relative;
+    z-index: 5;
+  }
+}
+
 @media (max-width: 560px) {
   .page-shell {
     padding: 0;

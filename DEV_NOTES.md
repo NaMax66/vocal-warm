@@ -5,7 +5,8 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 ## Workspace
 
 - Project folder: `C:\Users\maxim\Documents\Codex\VocalWarm`
-- Dev URL: `http://127.0.0.1:3000/`
+- Dev URL: `http://localhost:3000/`
+- Production URL: `https://vocal-warm.selfkit.org`
 - Do not run `npm run build` unless the user explicitly asks.
 - Dev-only layout hack: set `NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK=1` to fall back after microphone permission denial. Always try the real microphone first; only start the fake stable `C4` active session if mic startup fails, so normal browsers with mic access still use real input. Runtime config may expose the flag as number `1` or string `'1'`; treat both as enabled. Keep it off outside local layout work.
 - Prefer small, direct Vue/Nuxt changes that match the existing component style.
@@ -118,6 +119,6 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Lightweight checks used so far:
   - `git diff --check`
-  - `Invoke-WebRequest -Uri http://127.0.0.1:3000/ -UseBasicParsing | Select-Object StatusCode,StatusDescription`
+  - `Invoke-WebRequest -Uri http://localhost:3000/ -UseBasicParsing | Select-Object StatusCode,StatusDescription`
   - In-app browser smoke check and console error check when useful.
 - Build has intentionally not been run during this work.

@@ -45,7 +45,8 @@ Russian documentation: [README.ru.md](README.ru.md)
 - The UI shows nearest note, octave, frequency in Hz, cents offset, tuning meter, a scrollable C2-B6 piano keyboard, volume meter, status, and microphone errors.
 - The detected note is highlighted on the keyboard when it is within C2-B6.
 - Browser microphone access requires `localhost` or HTTPS.
-- The last known dev URL is `http://127.0.0.1:3000/`.
+- Dev URL: `http://localhost:3000/`.
+- Production URL: `https://vocal-warm.selfkit.org`.
 
 ## Development Direction
 
@@ -60,4 +61,4 @@ npm install
 npm run dev
 ```
 
-Open the local URL from the terminal. Browser microphone access requires `localhost` or HTTPS.
+Open `http://localhost:3000/`. Browser microphone access requires `localhost` or HTTPS.

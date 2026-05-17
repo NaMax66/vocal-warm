@@ -182,6 +182,9 @@ onBeforeUnmount(() => {
   margin: 4px 0 0;
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
   scrollbar-color: rgba(23, 32, 29, 0.28) transparent;
   scrollbar-width: thin;
 }
@@ -218,6 +221,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   letter-spacing: 0;
   -webkit-tap-highlight-color: transparent;
+  touch-action: pan-x;
   transition: transform 90ms ease;
 }
 
