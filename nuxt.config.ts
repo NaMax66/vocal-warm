@@ -9,7 +9,7 @@ function readGitValue(command: string) {
 }
 
 const commitCount = readGitValue('git rev-list --count HEAD')
-const commitSha = process.env.CF_PAGES_COMMIT_SHA?.slice(0, 7) || readGitValue('git rev-parse --short HEAD')
+const commitSha = (process.env.CF_PAGES_COMMIT_SHA || readGitValue('git rev-parse HEAD')).slice(-4)
 const appVersion = commitCount && commitSha ? `b${commitCount}-${commitSha}` : commitSha || 'dev'
 
 export default defineNuxtConfig({
