@@ -15,6 +15,7 @@ import type { PianoKeyboardApi } from '~/components/PianoKeyboard.vue'
 import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 
 const runtimeConfig = useRuntimeConfig()
+const { $trackHumanAction } = useNuxtApp()
 
 const {
   language,
@@ -112,6 +113,8 @@ async function selectSamplePreset(presetId: SamplePresetId) {
 }
 
 async function startListening() {
+  $trackHumanAction?.('start_listening')
+
   await unlockKeyboardAudio().catch((error) => {
     console.warn('Keyboard audio unlock failed', error)
   })

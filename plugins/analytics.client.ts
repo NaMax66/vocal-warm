@@ -1,13 +1,5 @@
 const SESSION_STORAGE_KEY = 'vocalwarm:analytics-session-id'
 
-type AnalyticsPayload = {
-  event: string
-  path: string
-  sessionId: string
-  timestamp: string
-  properties: Record<string, unknown>
-}
-
 function getSessionId() {
   const existingSessionId = localStorage.getItem(SESSION_STORAGE_KEY)
   if (existingSessionId) {
@@ -19,7 +11,17 @@ function getSessionId() {
   return sessionId
 }
 
-function sendAnalyticsEvent(payload: AnalyticsPayload) {
+function sendHumanAction(action: string) {
+  const payload = {
+    event: 'human_action',
+    path: window.location.pathname,
+    sessionId: getSessionId(),
+    timestamp: new Date().toISOString(),
+    properties: {
+      app: 'vocalwarm',
+      action
+    }
+  }
   const body = JSON.stringify(payload)
 
   if (navigator.sendBeacon) {
@@ -36,16 +38,9 @@ function sendAnalyticsEvent(payload: AnalyticsPayload) {
 }
 
 export default defineNuxtPlugin(() => {
-  sendAnalyticsEvent({
-    event: 'page_view',
-    path: window.location.pathname,
-    sessionId: getSessionId(),
-    timestamp: new Date().toISOString(),
-    properties: {
-      app: 'vocalwarm',
-      referrer: document.referrer || null,
-      url: window.location.href,
-      userAgent: navigator.userAgent
+  return {
+    provide: {
+      trackHumanAction: sendHumanAction
     }
-  })
+  }
 })
