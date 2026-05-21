@@ -71,6 +71,13 @@ const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMi
 const noteHoldTargetMidi = ref<number | null>(null)
 const pianoKeyboard = ref<PianoKeyboardApi | null>(null)
 const isPitchKeyboardView = ref(false)
+const micHealthDetectionTarget = 10
+const micHealthVolumeThreshold = 0.012
+const micHealthTimeoutMs = 15000
+let micHealthDetectedFrames = 0
+let micHealthMaxVolume = 0
+let micHealthObservationId = 0
+let micHealthTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 const volumeSteps = computed(() => Math.min(12, Math.round(volume.value * 90)))
 const {
@@ -124,6 +131,67 @@ async function startListening() {
   if (isMicBanLayoutHackEnabled.value && !isListening.value) {
     startMicBanLayoutHack(preloadKeyboardSampler)
   }
+
+  if (!isListening.value) {
+    trackMicHealth('start_failed', {
+      error: errorMessage.value || null
+    })
+    return
+  }
+
+  beginMicHealthObservation()
+}
+
+function beginMicHealthObservation() {
+  const observationId = micHealthObservationId + 1
+
+  micHealthObservationId = observationId
+  micHealthDetectedFrames = 0
+  micHealthMaxVolume = 0
+  clearMicHealthTimeout()
+
+  micHealthTimeoutId = setTimeout(() => {
+    finishMicHealthObservation(observationId, 'no_signal_timeout')
+  }, micHealthTimeoutMs)
+
+  return observationId
+}
+
+function finishMicHealthObservation(
+  observationId: number,
+  outcome: 'signal_confirmed' | 'start_failed' | 'no_signal_timeout',
+  properties: Record<string, unknown> = {}
+) {
+  if (observationId !== micHealthObservationId) {
+    return
+  }
+
+  micHealthObservationId += 1
+  clearMicHealthTimeout()
+  trackMicHealth(outcome, properties)
+}
+
+function trackMicHealth(
+  outcome: 'signal_confirmed' | 'start_failed' | 'no_signal_timeout',
+  properties: Record<string, unknown> = {}
+) {
+  $trackHumanAction?.('microphone_health', {
+    outcome,
+    detectedFrames: micHealthDetectedFrames,
+    maxVolume: Number(micHealthMaxVolume.toFixed(4)),
+    volumeThreshold: micHealthVolumeThreshold,
+    timeoutMs: micHealthTimeoutMs,
+    ...properties
+  })
+}
+
+function clearMicHealthTimeout() {
+  if (!micHealthTimeoutId) {
+    return
+  }
+
+  clearTimeout(micHealthTimeoutId)
+  micHealthTimeoutId = null
 }
 
 function focusWarmupKeyboardRange(fromMidi: number, toMidi: number) {
@@ -146,6 +214,23 @@ onMounted(() => {
   startInactiveTabStop()
 })
 
+watch([isListening, frequency, volume], ([nextListening, nextFrequency, nextVolume]) => {
+  if (!micHealthTimeoutId || !nextListening) {
+    return
+  }
+
+  micHealthMaxVolume = Math.max(micHealthMaxVolume, nextVolume)
+
+  if (!nextFrequency || nextVolume < micHealthVolumeThreshold) {
+    return
+  }
+
+  micHealthDetectedFrames += 1
+  if (micHealthDetectedFrames >= micHealthDetectionTarget) {
+    finishMicHealthObservation(micHealthObservationId, 'signal_confirmed')
+  }
+})
+
 useHead(() => ({
   title: `VocalWarm - ${t.value.title}`,
   htmlAttrs: {
@@ -158,6 +243,7 @@ onBeforeUnmount(() => {
   disposeStablePitchReadout()
   disposeInactiveTabStop()
   disposeKeyboardAudio()
+  clearMicHealthTimeout()
   stopListening()
 })
 </script>

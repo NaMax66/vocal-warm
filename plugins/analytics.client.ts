@@ -11,7 +11,11 @@ function getSessionId() {
   return sessionId
 }
 
-function sendHumanAction(action: string) {
+function sendHumanAction(
+  appVersion: string,
+  action: string,
+  properties: Record<string, unknown> = {}
+) {
   const payload = {
     event: 'human_action',
     path: window.location.pathname,
@@ -19,7 +23,10 @@ function sendHumanAction(action: string) {
     timestamp: new Date().toISOString(),
     properties: {
       app: 'vocalwarm',
-      action
+      action,
+      appVersion,
+      userAgent: navigator.userAgent,
+      ...properties
     }
   }
   const body = JSON.stringify(payload)
@@ -38,9 +45,14 @@ function sendHumanAction(action: string) {
 }
 
 export default defineNuxtPlugin(() => {
+  const runtimeConfig = useRuntimeConfig()
+  const appVersion = String(runtimeConfig.public.appVersion || 'dev')
+
   return {
     provide: {
-      trackHumanAction: sendHumanAction
+      trackHumanAction: (action: string, properties?: Record<string, unknown>) => {
+        sendHumanAction(appVersion, action, properties)
+      }
     }
   }
 })
