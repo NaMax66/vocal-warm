@@ -47,10 +47,15 @@ function sendHumanAction(
 export default defineNuxtPlugin(() => {
   const runtimeConfig = useRuntimeConfig()
   const appVersion = String(runtimeConfig.public.appVersion || 'dev')
+  const isStaticHost = runtimeConfig.public.staticHost === '1'
 
   return {
     provide: {
       trackHumanAction: (action: string, properties?: Record<string, unknown>) => {
+        if (isStaticHost) {
+          return
+        }
+
         sendHumanAction(appVersion, action, properties)
       }
     }

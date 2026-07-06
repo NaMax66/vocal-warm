@@ -31,6 +31,11 @@ function sendClientLog(payload: Omit<ClientLogPayload, 'userAgent' | 'url'>) {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
+  const runtimeConfig = useRuntimeConfig()
+  if (runtimeConfig.public.staticHost === '1') {
+    return
+  }
+
   nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
     sendClientLog({
       source: 'vue:errorHandler',

@@ -10,6 +10,8 @@ function readGitValue(command: string) {
 
 const commitSha = (process.env.CF_PAGES_COMMIT_SHA || readGitValue('git rev-parse HEAD')).slice(0, 8)
 const appVersion = commitSha || 'dev'
+const appBaseUrl = process.env.NUXT_APP_BASE_URL || '/'
+const normalizedAppBaseUrl = appBaseUrl.endsWith('/') ? appBaseUrl : `${appBaseUrl}/`
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
@@ -17,10 +19,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appVersion,
-      micBanLayoutHack: process.env.NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK === '1' ? '1' : '0'
+      micBanLayoutHack: process.env.NUXT_PUBLIC_MIC_BAN_LAYOUT_HACK === '1' ? '1' : '0',
+      staticHost: process.env.NUXT_PUBLIC_STATIC_HOST === '1' ? '1' : '0'
     }
   },
   app: {
+    baseURL: normalizedAppBaseUrl,
     head: {
       title: 'VocalWarm',
       meta: [
@@ -33,7 +37,7 @@ export default defineNuxtConfig({
         {
           rel: 'icon',
           type: 'image/svg+xml',
-          href: '/favicon.svg'
+          href: `${normalizedAppBaseUrl}favicon.svg`
         }
       ]
     }
