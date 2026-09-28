@@ -291,10 +291,22 @@ const { isOpen, root, toggle } = usePopoverDisclosure()
 .settings-popover {
   right: -34px;
   width: min(360px, calc(100vw - 20px));
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 12px;
   padding: 12px;
-  max-height: min(78vh, 720px);
+  max-height: min(calc(100dvh - 102px), 720px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.settings-popover > * {
+  min-height: max-content;
+}
+
+:global(.tuner:has(.settings-popover)) {
+  overflow: visible;
 }
 
 .settings-section {

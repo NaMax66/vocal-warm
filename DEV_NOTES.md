@@ -93,6 +93,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `vocalwarm-show-warmup-report`: opens the warmup report modal after a completed warmup when set to `1`; default is off.
 - `vocalwarm-show-exercises`: shows both guided exercise components when set to `1`; default is off.
 - `vocalwarm-show-keyboard-controls`: shows the on-screen `KeyboardControls.vue` panel when set to `1`; default is off. Do not conditionally initialize `useSelectedNoteControls`, because physical keyboard controls and the selected-key marker must remain active while the panel is hidden.
+- At the `560px` mobile breakpoint, normal tuner content switches to a vertical flex layout and `keyboard-dock` uses `margin-top: auto`. Keep `PianoKeyboard.vue` and optional `KeyboardControls.vue` inside this shared dock so the keyboard alone, or the keyboard plus controls, stays attached to the bottom edge of the screen.
 - `vocalwarm-show-volume-meter`: shows the main `VolumeMeter.vue` when set to `1`; default is off. The microphone diagnostics menu keeps its compact live RMS readout regardless of this preference.
 - `vocalwarm-keyboard-instrument`: selected keyboard instrument (`piano` or `organ`).
 - `vocalwarm-sample-preset`: selected dynamic/sample preset.

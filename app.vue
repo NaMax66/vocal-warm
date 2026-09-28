@@ -87,7 +87,6 @@ const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
 const noteHoldTargetMidi = ref<number | null>(null)
 const pianoKeyboard = ref<PianoKeyboardApi | null>(null)
-const isPitchKeyboardView = ref(false)
 const micHealthDetectionTarget = 10
 const micHealthVolumeThreshold = computed(() => microphoneMinimumRms.value)
 const micHealthTimeoutMs = 15000
@@ -229,10 +228,6 @@ function focusWarmupKeyboardRange(fromMidi: number, toMidi: number) {
   })
 }
 
-function togglePitchKeyboardView() {
-  isPitchKeyboardView.value = !isPitchKeyboardView.value
-}
-
 onMounted(() => {
   restoreMicrophoneSettings()
   restoreAppPreferences({
@@ -280,7 +275,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="page-shell">
-    <section class="tuner" :class="{ inactive: !isListening, 'pitch-keyboard-view': isPitchKeyboardView }">
+    <section class="tuner" :class="{ inactive: !isListening }">
       <AppHeader
         :title="t.title"
         :stop-label="t.stop"
@@ -288,17 +283,6 @@ onBeforeUnmount(() => {
         @stop="stopListening"
       >
         <template #controls>
-          <button
-            class="view-toggle-button"
-            type="button"
-            :class="{ active: isPitchKeyboardView }"
-            :aria-label="isPitchKeyboardView ? t.fullView : t.pitchKeyboardView"
-            :aria-pressed="isPitchKeyboardView"
-            @click="togglePitchKeyboardView"
-          >
-            {{ isPitchKeyboardView ? t.fullView : t.pitchKeyboardView }}
-          </button>
-
           <HeaderSoundSettings
             :language="language"
             :languages="supportedLanguages"
@@ -540,58 +524,6 @@ button {
   align-content: center;
 }
 
-.view-toggle-button {
-  min-width: 56px;
-  height: 48px;
-  border: 0;
-  border-radius: 0;
-  color: #17201d;
-  background: rgba(255, 250, 240, 0.94);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.58),
-    0 8px 18px rgba(31, 41, 37, 0.1);
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.view-toggle-button:hover,
-.view-toggle-button:focus-visible,
-.view-toggle-button.active {
-  color: #fffaf0;
-  background: #277a73;
-  outline: 0;
-}
-
-.tuner.pitch-keyboard-view .volume,
-.tuner.pitch-keyboard-view .warmup-program,
-.tuner.pitch-keyboard-view .note-hold-exercise,
-.tuner.pitch-keyboard-view .exercise-block,
-.tuner.pitch-keyboard-view .keyboard-control-pad {
-  display: none;
-}
-
-.tuner.pitch-keyboard-view .piano-key.selected::after {
-  display: none;
-}
-
-.tuner.pitch-keyboard-view .tuner-content {
-  display: grid;
-  grid-template-rows: minmax(170px, 1fr) minmax(74px, auto) auto;
-  align-items: center;
-  min-height: 0;
-}
-
-.tuner.pitch-keyboard-view .readout {
-  height: clamp(150px, 28vh, 220px);
-  margin: 0;
-}
-
-.tuner.pitch-keyboard-view .tuning-meter {
-  margin: 4px 6px 14px;
-}
-
 .error {
   margin: 18px 0 0;
   color: #9f2f1a;
@@ -647,18 +579,6 @@ button {
     backdrop-filter: blur(12px) saturate(1.08);
   }
 
-  .tuner.pitch-keyboard-view .tuner-content {
-    grid-template-rows: minmax(130px, 1fr) minmax(58px, auto) auto;
-    gap: 8px;
-  }
-
-  .tuner.pitch-keyboard-view .readout {
-    height: clamp(116px, 23vh, 176px);
-  }
-
-  .tuner.pitch-keyboard-view .tuning-meter {
-    margin: 0 6px 4px;
-  }
 }
 
 @media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) {
@@ -697,12 +617,6 @@ button {
     z-index: 5;
   }
 
-  .tuner.pitch-keyboard-view .tuner-content {
-    grid-template-rows:
-      minmax(92px, auto)
-      minmax(52px, auto)
-      auto;
-  }
 }
 
 @media (max-width: 560px) {
@@ -719,18 +633,22 @@ button {
     border-radius: 0;
   }
 
-  .view-toggle-button {
-    min-width: 48px;
-    padding: 0 7px;
-    font-size: 0.68rem;
+  .tuner .tuner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .tuner.pitch-keyboard-view .tuner-content {
-    grid-template-rows: minmax(150px, 1fr) minmax(58px, auto) auto;
+  .tuner .keyboard-dock {
+    order: 10;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    margin-top: auto;
   }
 
-  .tuner.pitch-keyboard-view .readout {
-    height: clamp(138px, 27vh, 190px);
+  .tuner .error {
+    order: 9;
   }
 }
 </style>
