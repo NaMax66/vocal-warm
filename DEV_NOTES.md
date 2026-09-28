@@ -72,6 +72,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Mobile control buttons are fixed at the bottom and use taller tap targets.
 - Volume meter has no visible text labels; keep only the bars and an accessibility label.
 - `WarmupProgram.vue` is intentionally self-contained. It renders the "Распевка" button above the tuning rail, plays configurable 3-5 note ascending then descending call-and-response patterns, waits for sung pitch in `awaitSungPattern()`, transposes by semitone, and can open a copyable text report modal when enabled in settings.
+- During sing-back, `WarmupProgram.vue` emits the ordered target MIDI list and current expected MIDI. `app.vue` passes them to `PianoKeyboard.vue` for numbered key markers and uses the current target for `TuningMeter.vue`; clear both targets when playback resumes, the run stops, completes, or unmounts.
 - `WarmupProgram.vue` and `NoteHoldExercise.vue` are mounted together only when the persisted `vocalwarm-show-exercises` setting is enabled. The default is hidden; unmounting cancels active note-hold work and prevents hidden exercise UI from running in the background.
 - Large pitch note readout appears only after the same detected note remains stable for `3s`, fades in, and waits briefly before disappearing on note drop/change so small voice slips do not blink it away.
 - The hint text under the arrow/Space controls was intentionally removed.

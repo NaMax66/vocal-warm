@@ -12,6 +12,8 @@ const props = defineProps<{
   detectedMidi: number | null
   pressedMidi: number | null
   selectedMidi: number
+  warmupTargetMidis: readonly number[]
+  warmupActiveMidi: number | null
   noteNotation: NoteNotation
   label: string
 }>()
@@ -85,7 +87,9 @@ const pianoKeys = computed(() => {
       isPressed: props.pressedMidi === midi,
       isSelected: props.selectedMidi === midi,
       isCombined: props.detectedMidi === midi && props.pressedMidi === midi,
-      isVoiceRelease: instantVoiceReleaseMidi.value === midi
+      isVoiceRelease: instantVoiceReleaseMidi.value === midi,
+      warmupOrder: props.warmupTargetMidis.indexOf(midi) + 1,
+      isWarmupActive: props.warmupActiveMidi === midi
     }
   })
 })
@@ -224,8 +228,11 @@ onBeforeUnmount(() => {
             pressed: key.isPressed,
             selected: key.isSelected,
             combined: key.isCombined,
-            'voice-release': key.isVoiceRelease
+            'voice-release': key.isVoiceRelease,
+            'warmup-target': key.warmupOrder > 0,
+            'warmup-active': key.isWarmupActive
           }"
+          :data-warmup-order="key.warmupOrder || undefined"
           :data-midi="key.midi"
           :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
@@ -252,10 +259,13 @@ onBeforeUnmount(() => {
             pressed: key.isPressed,
             selected: key.isSelected,
             combined: key.isCombined,
-            'voice-release': key.isVoiceRelease
+            'voice-release': key.isVoiceRelease,
+            'warmup-target': key.warmupOrder > 0,
+            'warmup-active': key.isWarmupActive
           }"
           :style="{ '--after-white-count': key.afterWhiteCount }"
           :data-midi="key.midi"
+          :data-warmup-order="key.warmupOrder || undefined"
           :aria-label="key.displayLabel"
           :aria-current="key.isDetected || key.isPressed ? 'true' : undefined"
           @pointerdown.prevent="startNote(key.soundLabel, key.midi)"
@@ -406,6 +416,59 @@ onBeforeUnmount(() => {
   line-height: 1;
   transform: translateX(-50%);
   pointer-events: none;
+}
+
+.piano-key.warmup-target::before {
+  content: attr(data-warmup-order);
+  position: absolute;
+  top: 8px;
+  right: 5px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #8b6fc8;
+  border-radius: 50%;
+  color: #5d429a;
+  background: #fffaf0;
+  box-shadow: 0 3px 10px rgba(92, 66, 151, 0.22);
+  font-size: 0.7rem;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.piano-key.warmup-target.selected::after {
+  display: none;
+}
+
+.piano-key.black.warmup-target::before {
+  top: 5px;
+  right: 2px;
+  width: 17px;
+  height: 17px;
+  border-width: 1px;
+  font-size: 0.62rem;
+}
+
+.piano-key.warmup-active {
+  outline: 4px solid rgba(139, 111, 200, 0.72);
+  outline-offset: -4px;
+  box-shadow: 0 0 24px rgba(139, 111, 200, 0.58);
+}
+
+.piano-key.warmup-active::before {
+  color: #fffaf0;
+  background: #8b6fc8;
+  animation: warmup-target-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes warmup-target-pulse {
+  to {
+    transform: scale(1.14);
+    box-shadow: 0 0 16px rgba(139, 111, 200, 0.7);
+  }
 }
 
 .piano-key.black.selected::after {

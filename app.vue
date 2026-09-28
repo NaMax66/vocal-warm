@@ -86,6 +86,9 @@ const isMicBanLayoutHackEnabled = computed(() => String(runtimeConfig.public.mic
 const repoUrl = 'https://github.com/NaMax66/vocal-warm'
 const selectedDisplayNoteLabel = computed(() => midiToDisplayNoteName(selectedMidi.value, noteNotation.value))
 const noteHoldTargetMidi = ref<number | null>(null)
+const warmupTargetMidis = ref<number[]>([])
+const warmupActiveMidi = ref<number | null>(null)
+const tuningTargetMidi = computed(() => noteHoldTargetMidi.value ?? warmupActiveMidi.value)
 const pianoKeyboard = ref<PianoKeyboardApi | null>(null)
 const micHealthDetectionTarget = 10
 const micHealthVolumeThreshold = computed(() => microphoneMinimumRms.value)
@@ -123,6 +126,11 @@ const {
 
 function setNoteHoldTargetMidi(midi: number | null) {
   noteHoldTargetMidi.value = midi
+}
+
+function setWarmupTargets(midis: number[], activeMidi: number | null) {
+  warmupTargetMidis.value = midis
+  warmupActiveMidi.value = activeMidi
 }
 
 async function selectKeyboardInstrument(instrumentId: KeyboardInstrumentId) {
@@ -368,6 +376,7 @@ onBeforeUnmount(() => {
             @note-start="startKeyboardNote"
             @note-end="stopKeyboardNote"
             @warmup-range-focus="focusWarmupKeyboardRange"
+            @targets-change="setWarmupTargets"
           />
 
           <NoteHoldExercise
@@ -385,7 +394,7 @@ onBeforeUnmount(() => {
           :label="t.meterLabel"
           :cents="cents"
           :frequency="frequency"
-          :target-midi="noteHoldTargetMidi"
+          :target-midi="tuningTargetMidi"
         />
 
         <div class="keyboard-dock">
@@ -394,6 +403,8 @@ onBeforeUnmount(() => {
             :detected-midi="activeMidi"
             :pressed-midi="pressedMidi"
             :selected-midi="selectedMidi"
+            :warmup-target-midis="warmupTargetMidis"
+            :warmup-active-midi="warmupActiveMidi"
             :note-notation="noteNotation"
             :label="t.keyboardLabel"
             @note-start="startKeyboardNote"

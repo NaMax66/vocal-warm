@@ -34,6 +34,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Pressed key highlighting fades out over about 0.5 seconds to match the short note hold.
 - The selected note is marked on the keyboard with a small red cross.
 - `WarmupProgram.vue` adds a "Warmup" / "Распевка" call-and-response exercise above the tuning rail: it can play 3-5 notes up, waits for the singer, plays the same pattern down, waits again, transposes up by semitone, and can show a copyable text report at the end when enabled in settings.
+- During each sing-back phase, the piano marks every target note with its sequence number, emphasizes the note currently expected, and points the tuning meter at that note.
 - The warmup and note-hold exercises share one settings toggle and are hidden by default; the preference is persisted locally.
 - The on-screen selected-note controls are also hidden by default behind their own settings toggle. Physical keyboard navigation and the selected-note marker remain active independently.
 - The main volume meter is hidden by default behind a separate settings toggle; live RMS remains available inside microphone diagnostics.

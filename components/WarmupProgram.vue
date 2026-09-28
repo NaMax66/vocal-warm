@@ -24,6 +24,7 @@ const emit = defineEmits<{
   noteStart: [note: string, midi: number]
   noteEnd: [note: string, midi: number]
   warmupRangeFocus: [fromMidi: number, toMidi: number]
+  targetsChange: [midis: number[], activeMidi: number | null]
 }>()
 
 type WarmupDirection = 'up' | 'down'
@@ -146,6 +147,7 @@ function isSungPatternComplete(records: SungNoteRecord[]) {
 
 async function playPattern(midis: number[]) {
   phase.value = 'playing'
+  emit('targetsChange', [], null)
 
   for (const midi of midis) {
     if (isCancelled) {
@@ -170,12 +172,21 @@ async function awaitSungPattern(midis: number[], round: number, direction: Warmu
     samples: []
   }))
   const startedAt = performance.now()
+  let emittedActiveMidi: number | null = null
+
+  emit('targetsChange', midis, midis[0] ?? null)
+  emittedActiveMidi = midis[0] ?? null
 
   while (!isCancelled && performance.now() - startedAt < listenWindowMs) {
     const activeRecord = records.find((record) => !record.heard)
 
     if (!activeRecord) {
       break
+    }
+
+    if (activeRecord.targetMidi !== emittedActiveMidi) {
+      emittedActiveMidi = activeRecord.targetMidi
+      emit('targetsChange', midis, emittedActiveMidi)
     }
 
     currentPrompt.value = `${labels.value.sing}: ${activeRecord.targetLabel}`
@@ -292,6 +303,7 @@ async function startWarmup() {
     return
   }
 
+  emit('targetsChange', [], null)
   phase.value = 'done'
   currentPrompt.value = ''
   reportText.value = buildReport(records)
@@ -302,6 +314,7 @@ function stopWarmup() {
   isCancelled = true
   phase.value = 'idle'
   currentPrompt.value = ''
+  emit('targetsChange', [], null)
 }
 
 function closeReport() {
