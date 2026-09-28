@@ -34,7 +34,8 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 
 - Piano playback uses Salamander Grand Piano samples through `Tone.Sampler`.
 - Organ playback uses FluidR3 GM church organ samples through a small looping sample player, because regular `Tone.Sampler` plays those soundfont samples as short one-shot buffers.
-- Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback and resumes suspended contexts. It first requests raw-ish audio with `echoCancellation`, `noiseSuppression`, and `autoGainControl` disabled, then falls back to `{ audio: true }` if those constraints fail for Apple/Safari compatibility. Sustained singing can disappear on phone browsers when default noise suppression / auto gain treats the note as background.
+- Microphone startup uses `window.AudioContext` with `webkitAudioContext` fallback and resumes suspended contexts. It requests the saved device and user-selected `echoCancellation`, `noiseSuppression`, and `autoGainControl` values, then falls back to `{ audio: true }` when those constraints fail. The default is raw-ish audio with all three disabled because sustained singing can disappear when speech-oriented processing treats the note as background.
+- Microphone troubleshooting controls live in `HeaderSoundSettings.vue` via `MicrophoneSettingsSection.vue`; capture, gain, RMS threshold, device enumeration, persistence, and the copyable diagnostic payload remain owned by `usePitchDetector.ts`. Device/DSP changes require the apply-and-restart action, while gain and RMS threshold update immediately.
 - Piano samples load from jsDelivr packages named `@audio-samples/piano-velocity*`.
 - Sample requests are cached in CacheStorage `vocalwarm-sample-cache-v1`. The service worker caches piano OGG files and the organ soundfont script so repeated local reloads avoid re-downloading them.
 - Current presets in `utils/instrumentSamples.ts`:
@@ -71,6 +72,7 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - Mobile control buttons are fixed at the bottom and use taller tap targets.
 - Volume meter has no visible text labels; keep only the bars and an accessibility label.
 - `WarmupProgram.vue` is intentionally self-contained. It renders the "Распевка" button above the tuning rail, plays configurable 3-5 note ascending then descending call-and-response patterns, waits for sung pitch in `awaitSungPattern()`, transposes by semitone, and can open a copyable text report modal when enabled in settings.
+- `WarmupProgram.vue` and `NoteHoldExercise.vue` are mounted together only when the persisted `vocalwarm-show-exercises` setting is enabled. The default is hidden; unmounting cancels active note-hold work and prevents hidden exercise UI from running in the background.
 - Large pitch note readout appears only after the same detected note remains stable for `3s`, fades in, and waits briefly before disappearing on note drop/change so small voice slips do not blink it away.
 - The hint text under the arrow/Space controls was intentionally removed.
 - Do not show numeric cents offset in the readout or beside the pitch monitor.
@@ -89,6 +91,9 @@ This file is for future Codex sessions. Keep it concise and update it when proje
 - `vocalwarm-language`: selected UI language.
 - `vocalwarm-note-notation`: selected note notation (`letter` or `solfege`).
 - `vocalwarm-show-warmup-report`: opens the warmup report modal after a completed warmup when set to `1`; default is off.
+- `vocalwarm-show-exercises`: shows both guided exercise components when set to `1`; default is off.
+- `vocalwarm-show-keyboard-controls`: shows the on-screen `KeyboardControls.vue` panel when set to `1`; default is off. Do not conditionally initialize `useSelectedNoteControls`, because physical keyboard controls and the selected-key marker must remain active while the panel is hidden.
+- `vocalwarm-show-volume-meter`: shows the main `VolumeMeter.vue` when set to `1`; default is off. The microphone diagnostics menu keeps its compact live RMS readout regardless of this preference.
 - `vocalwarm-keyboard-instrument`: selected keyboard instrument (`piano` or `organ`).
 - `vocalwarm-sample-preset`: selected dynamic/sample preset.
 - `vocalwarm-piano-preset`: legacy selected piano sample preset; still read as a fallback for migration.

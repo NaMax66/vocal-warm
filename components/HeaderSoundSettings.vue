@@ -3,6 +3,10 @@ import type { Language } from '~/utils/i18n'
 import type { NoteNotation } from '~/composables/useNoteMath'
 import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
 import { usePopoverDisclosure } from '~/composables/usePopoverDisclosure'
+import type {
+  MicrophoneDeviceOption,
+  MicrophoneSettingKey
+} from '~/composables/usePitchDetector'
 
 defineProps<{
   language: Language
@@ -16,6 +20,9 @@ defineProps<{
   soundDescription: string
   soundLoadingLabel: string
   showWarmupReportLabel: string
+  showExercisesLabel: string
+  showKeyboardControlsLabel: string
+  showVolumeMeterLabel: string
   keyboardInstruments: readonly { id: KeyboardInstrumentId }[]
   keyboardInstrumentLabels: Record<KeyboardInstrumentId, string>
   soundPresets: readonly { id: SamplePresetId }[]
@@ -24,6 +31,38 @@ defineProps<{
   selectedSamplePresetId: SamplePresetId
   isKeyboardSamplerLoading: boolean
   shouldShowWarmupReport: boolean
+  shouldShowExercises: boolean
+  shouldShowKeyboardControls: boolean
+  shouldShowVolumeMeter: boolean
+  microphoneText: {
+    title: string
+    description: string
+    device: string
+    defaultDevice: string
+    inputGain: string
+    sensitivity: string
+    sensitivityHint: string
+    echoCancellation: string
+    noiseSuppression: string
+    autoGainControl: string
+    apply: string
+    copyDebug: string
+    copied: string
+    liveSignal: string
+    detectedPitch: string
+    noPitch: string
+  }
+  microphoneDevices: readonly MicrophoneDeviceOption[]
+  microphoneDeviceId: string
+  microphoneEchoCancellation: boolean
+  microphoneNoiseSuppression: boolean
+  microphoneAutoGainControl: boolean
+  microphoneInputGain: number
+  microphoneMinimumRms: number
+  isListening: boolean
+  microphoneDiagnosticReport: string
+  microphoneCurrentRms: number
+  microphoneCurrentFrequency: number | null
 }>()
 
 defineEmits<{
@@ -32,6 +71,11 @@ defineEmits<{
   setKeyboardInstrument: [instrumentId: KeyboardInstrumentId]
   setSamplePreset: [presetId: SamplePresetId]
   setShowWarmupReport: [value: boolean]
+  setShowExercises: [value: boolean]
+  setShowKeyboardControls: [value: boolean]
+  setShowVolumeMeter: [value: boolean]
+  setMicrophoneSetting: [key: MicrophoneSettingKey, value: string | number | boolean]
+  applyMicrophoneSettings: []
 }>()
 
 const { isOpen, root, toggle } = usePopoverDisclosure()
@@ -124,12 +168,56 @@ const { isOpen, root, toggle } = usePopoverDisclosure()
         <label class="settings-checkbox">
           <input
             type="checkbox"
+            :checked="shouldShowExercises"
+            @change="$emit('setShowExercises', ($event.target as HTMLInputElement).checked)"
+          >
+          <span>{{ showExercisesLabel }}</span>
+        </label>
+
+        <label class="settings-checkbox">
+          <input
+            type="checkbox"
+            :checked="shouldShowKeyboardControls"
+            @change="$emit('setShowKeyboardControls', ($event.target as HTMLInputElement).checked)"
+          >
+          <span>{{ showKeyboardControlsLabel }}</span>
+        </label>
+
+        <label class="settings-checkbox">
+          <input
+            type="checkbox"
+            :checked="shouldShowVolumeMeter"
+            @change="$emit('setShowVolumeMeter', ($event.target as HTMLInputElement).checked)"
+          >
+          <span>{{ showVolumeMeterLabel }}</span>
+        </label>
+
+        <label class="settings-checkbox">
+          <input
+            type="checkbox"
             :checked="shouldShowWarmupReport"
             @change="$emit('setShowWarmupReport', ($event.target as HTMLInputElement).checked)"
           >
           <span>{{ showWarmupReportLabel }}</span>
         </label>
       </section>
+
+      <MicrophoneSettingsSection
+        :text="microphoneText"
+        :devices="microphoneDevices"
+        :device-id="microphoneDeviceId"
+        :echo-cancellation="microphoneEchoCancellation"
+        :noise-suppression="microphoneNoiseSuppression"
+        :auto-gain-control="microphoneAutoGainControl"
+        :input-gain="microphoneInputGain"
+        :minimum-rms="microphoneMinimumRms"
+        :is-listening="isListening"
+        :diagnostic-report="microphoneDiagnosticReport"
+        :current-rms="microphoneCurrentRms"
+        :current-frequency="microphoneCurrentFrequency"
+        @set-setting="(key, value) => $emit('setMicrophoneSetting', key, value)"
+        @apply="$emit('applyMicrophoneSettings')"
+      />
     </div>
   </div>
 </template>
@@ -205,6 +293,8 @@ const { isOpen, root, toggle } = usePopoverDisclosure()
   width: min(360px, calc(100vw - 20px));
   gap: 12px;
   padding: 12px;
+  max-height: min(78vh, 720px);
+  overflow-y: auto;
 }
 
 .settings-section {

@@ -1,6 +1,21 @@
 import { frequencyToMidi, frequencyToMidiCents, isMidiInKeyboardRange, midiToFrequency, noteNames } from '~/composables/useNoteMath'
 import type { StatusKey } from '~/utils/i18n'
 
+export type MicrophoneDeviceOption = {
+  deviceId: string
+  label: string
+}
+
+export type MicrophoneSettingKey =
+  | 'deviceId'
+  | 'echoCancellation'
+  | 'noiseSuppression'
+  | 'autoGainControl'
+  | 'inputGain'
+  | 'minimumRms'
+
+const microphoneSettingsStorageKey = 'vocalwarm-microphone-settings-v1'
+
 export function usePitchDetector() {
   const isListening = ref(false)
   const statusKey = ref<StatusKey>('idle')
@@ -11,15 +26,30 @@ export function usePitchDetector() {
   const cents = ref(0)
   const volume = ref(0)
   const errorMessage = ref('')
+  const microphoneDevices = ref<MicrophoneDeviceOption[]>([])
+  const deviceId = ref('')
+  const echoCancellation = ref(false)
+  const noiseSuppression = ref(false)
+  const autoGainControl = ref(false)
+  const inputGain = ref(1)
+  const minimumRms = ref(0.012)
+  const diagnosticsRevision = ref(0)
 
   let audioContext: AudioContext | null = null
   let analyser: AnalyserNode | null = null
   let source: MediaStreamAudioSourceNode | null = null
+  let gainNode: GainNode | null = null
   let stream: MediaStream | null = null
   let animationId = 0
   let sampleBuffer: Float32Array | null = null
   let micBanLayoutHackIntervalId: ReturnType<typeof setInterval> | null = null
   let silentFrameCount = 0
+  let requestedConstraints: MediaTrackConstraints | boolean | null = null
+  let constraintFallbackError = ''
+  let rmsSampleCount = 0
+  let rmsTotal = 0
+  let maxRms = 0
+  let pitchFrameCount = 0
 
   function resolveAudioContextCtor() {
     return window.AudioContext || (window as typeof window & {
@@ -27,27 +57,87 @@ export function usePitchDetector() {
     }).webkitAudioContext
   }
 
-  function isIOSDevice() {
-    const userAgent = navigator.userAgent
-    return /iP(?:ad|hone|od)/.test(userAgent)
-      || (navigator.maxTouchPoints > 2 && /Macintosh/.test(userAgent))
+  function persistMicrophoneSettings() {
+    if (!import.meta.client) {
+      return
+    }
+
+    localStorage.setItem(microphoneSettingsStorageKey, JSON.stringify({
+      deviceId: deviceId.value,
+      echoCancellation: echoCancellation.value,
+      noiseSuppression: noiseSuppression.value,
+      autoGainControl: autoGainControl.value,
+      inputGain: inputGain.value,
+      minimumRms: minimumRms.value
+    }))
   }
 
-  async function getMicrophoneStream() {
-    if (isIOSDevice()) {
-      return navigator.mediaDevices.getUserMedia({ audio: true })
+  function restoreMicrophoneSettings() {
+    if (!import.meta.client) {
+      return
     }
 
     try {
+      const saved = JSON.parse(localStorage.getItem(microphoneSettingsStorageKey) || '{}')
+      deviceId.value = typeof saved.deviceId === 'string' ? saved.deviceId : ''
+      echoCancellation.value = saved.echoCancellation === true
+      noiseSuppression.value = saved.noiseSuppression === true
+      autoGainControl.value = saved.autoGainControl === true
+      inputGain.value = Number.isFinite(saved.inputGain)
+        ? Math.max(1, Math.min(8, saved.inputGain))
+        : 1
+      minimumRms.value = Number.isFinite(saved.minimumRms)
+        ? Math.max(0.001, Math.min(0.03, saved.minimumRms))
+        : 0.012
+    } catch (error) {
+      console.warn('Could not restore microphone settings', error)
+    }
+  }
+
+  function setMicrophoneSetting(key: MicrophoneSettingKey, value: string | number | boolean) {
+    if (key === 'deviceId') deviceId.value = String(value)
+    if (key === 'echoCancellation') echoCancellation.value = Boolean(value)
+    if (key === 'noiseSuppression') noiseSuppression.value = Boolean(value)
+    if (key === 'autoGainControl') autoGainControl.value = Boolean(value)
+    if (key === 'inputGain') inputGain.value = Math.max(1, Math.min(8, Number(value)))
+    if (key === 'minimumRms') minimumRms.value = Math.max(0.001, Math.min(0.03, Number(value)))
+    if (gainNode) gainNode.gain.value = inputGain.value
+    persistMicrophoneSettings()
+    diagnosticsRevision.value += 1
+  }
+
+  async function refreshMicrophoneDevices() {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    microphoneDevices.value = devices
+      .filter((device) => device.kind === 'audioinput')
+      .map((device, index) => ({
+        deviceId: device.deviceId,
+        label: device.label || `Microphone ${index + 1}`
+      }))
+  }
+
+  async function getMicrophoneStream() {
+    const constraints: MediaTrackConstraints = {
+      echoCancellation: echoCancellation.value,
+      noiseSuppression: noiseSuppression.value,
+      autoGainControl: autoGainControl.value
+    }
+
+    if (deviceId.value) {
+      constraints.deviceId = { exact: deviceId.value }
+    }
+
+    requestedConstraints = constraints
+    constraintFallbackError = ''
+
+    try {
       return await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false
-        }
+        audio: constraints
       })
     } catch (error) {
-      console.warn('Raw microphone constraints failed, falling back to default audio', error)
+      constraintFallbackError = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+      console.warn('Requested microphone constraints failed, falling back to default audio', error)
+      requestedConstraints = true
       return navigator.mediaDevices.getUserMedia({ audio: true })
     }
   }
@@ -70,6 +160,52 @@ export function usePitchDetector() {
     })
   }
 
+  const diagnosticReport = computed(() => {
+    diagnosticsRevision.value
+    const track = stream?.getAudioTracks()[0]
+    const settings = track?.getSettings?.() ?? null
+    const capabilities = track?.getCapabilities?.() ?? null
+    const averageRms = rmsSampleCount ? rmsTotal / rmsSampleCount : 0
+
+    return JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      page: import.meta.client ? location.href : '',
+      userAgent: import.meta.client ? navigator.userAgent : '',
+      app: {
+        listening: isListening.value,
+        detectedFrequencyHz: frequency.value ? Number(frequency.value.toFixed(2)) : null,
+        note: note.value === '--' ? null : `${note.value}${octave.value}`,
+        latestRms: Number(volume.value.toFixed(6)),
+        estimatedRawRms: Number((volume.value / inputGain.value).toFixed(6)),
+        averageRms: Number(averageRms.toFixed(6)),
+        maxRms: Number(maxRms.toFixed(6)),
+        sampledFrames: rmsSampleCount,
+        pitchFrames: pitchFrameCount,
+        inputGain: inputGain.value,
+        minimumRms: minimumRms.value
+      },
+      requestedConstraints,
+      constraintFallbackError: constraintFallbackError || null,
+      audioContext: audioContext ? {
+        state: audioContext.state,
+        sampleRate: audioContext.sampleRate,
+        baseLatency: audioContext.baseLatency
+      } : null,
+      track: track ? {
+        label: track.label,
+        enabled: track.enabled,
+        muted: track.muted,
+        readyState: track.readyState,
+        settings,
+        capabilities
+      } : null,
+      supportedConstraints: import.meta.client
+        ? navigator.mediaDevices?.getSupportedConstraints?.()
+        : null,
+      availableInputs: microphoneDevices.value
+    }, null, 2)
+  })
+
   function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     let rms = 0
 
@@ -79,8 +215,12 @@ export function usePitchDetector() {
 
     rms = Math.sqrt(rms / buffer.length)
     volume.value = rms
+    rmsSampleCount += 1
+    rmsTotal += rms
+    maxRms = Math.max(maxRms, rms)
+    if (rmsSampleCount % 30 === 0) diagnosticsRevision.value += 1
 
-    if (rms < 0.012) {
+    if (rms < minimumRms.value) {
       return null
     }
 
@@ -154,6 +294,7 @@ export function usePitchDetector() {
     const noteIndex = ((midi % 12) + 12) % 12
 
     frequency.value = nextFrequency
+    pitchFrameCount += 1
     note.value = noteNames[noteIndex]
     octave.value = String(Math.floor(midi / 12) - 1)
     activeMidi.value = isMidiInKeyboardRange(midi) ? midi : null
@@ -212,9 +353,20 @@ export function usePitchDetector() {
       analyser.fftSize = 4096
       sampleBuffer = new Float32Array(analyser.fftSize)
       source = audioContext.createMediaStreamSource(stream)
-      source.connect(analyser)
+      gainNode = audioContext.createGain()
+      gainNode.gain.value = inputGain.value
+      source.connect(gainNode)
+      gainNode.connect(analyser)
+      rmsSampleCount = 0
+      rmsTotal = 0
+      maxRms = 0
+      pitchFrameCount = 0
       await resumeAudioContext()
+      await refreshMicrophoneDevices().catch((error) => {
+        console.warn('Could not enumerate microphones', error)
+      })
       logMicrophoneDiagnostics()
+      diagnosticsRevision.value += 1
       isListening.value = true
       statusKey.value = 'listening'
       onStarted?.()
@@ -248,12 +400,14 @@ export function usePitchDetector() {
       micBanLayoutHackIntervalId = null
     }
     source?.disconnect()
+    gainNode?.disconnect()
     stream?.getTracks().forEach((track) => track.stop())
     audioContext?.close()
 
     audioContext = null
     analyser = null
     source = null
+    gainNode = null
     stream = null
     sampleBuffer = null
     silentFrameCount = 0
@@ -265,6 +419,7 @@ export function usePitchDetector() {
     activeMidi.value = null
     cents.value = 0
     statusKey.value = 'stopped'
+    diagnosticsRevision.value += 1
   }
 
   return {
@@ -277,6 +432,17 @@ export function usePitchDetector() {
     cents,
     volume,
     errorMessage,
+    microphoneDevices,
+    deviceId,
+    echoCancellation,
+    noiseSuppression,
+    autoGainControl,
+    inputGain,
+    minimumRms,
+    diagnosticReport,
+    restoreMicrophoneSettings,
+    setMicrophoneSetting,
+    refreshMicrophoneDevices,
     startListening,
     startMicBanLayoutHack,
     stopListening

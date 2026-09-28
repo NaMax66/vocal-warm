@@ -272,13 +272,24 @@ async function startWarmup() {
 
     const upPattern = getPattern(roundStartMidi, 'up')
     await playPattern(upPattern)
+    if (isCancelled) break
     records.push(await awaitSungPattern(upPattern, roundIndex + 1, 'up'))
+    if (isCancelled) break
     await sleep(350)
+    if (isCancelled) break
 
     const downPattern = getPattern(roundStartMidi, 'down')
     await playPattern(downPattern)
+    if (isCancelled) break
     records.push(await awaitSungPattern(downPattern, roundIndex + 1, 'down'))
+    if (isCancelled) break
     await sleep(450)
+  }
+
+  if (isCancelled) {
+    phase.value = 'idle'
+    currentPrompt.value = ''
+    return
   }
 
   phase.value = 'done'
@@ -313,6 +324,7 @@ async function copyReport() {
 }
 
 onBeforeUnmount(() => {
+  stopWarmup()
   if (copiedTimeoutId) {
     clearTimeout(copiedTimeoutId)
   }

@@ -13,6 +13,7 @@ import { useSelectedNoteControls } from '~/composables/useSelectedNoteControls'
 import { useStablePitchReadout } from '~/composables/useStablePitchReadout'
 import type { PianoKeyboardApi } from '~/components/PianoKeyboard.vue'
 import type { KeyboardInstrumentId, SamplePresetId } from '~/utils/instrumentSamples'
+import type { MicrophoneSettingKey } from '~/composables/usePitchDetector'
 
 const runtimeConfig = useRuntimeConfig()
 const { $trackHumanAction } = useNuxtApp()
@@ -22,9 +23,15 @@ const {
   noteNotation,
   selectedMidi,
   shouldShowWarmupReport,
+  shouldShowExercises,
+  shouldShowKeyboardControls,
+  shouldShowVolumeMeter,
   setLanguage,
   setNoteNotation,
   setShowWarmupReport,
+  setShowExercises,
+  setShowKeyboardControls,
+  setShowVolumeMeter,
   setSelectedMidi,
   persistKeyboardInstrument,
   persistSamplePreset,
@@ -40,6 +47,16 @@ const {
   cents,
   volume,
   errorMessage,
+  microphoneDevices,
+  deviceId: microphoneDeviceId,
+  echoCancellation: microphoneEchoCancellation,
+  noiseSuppression: microphoneNoiseSuppression,
+  autoGainControl: microphoneAutoGainControl,
+  inputGain: microphoneInputGain,
+  minimumRms: microphoneMinimumRms,
+  diagnosticReport: microphoneDiagnosticReport,
+  restoreMicrophoneSettings,
+  setMicrophoneSetting,
   startListening: startPitchListening,
   startMicBanLayoutHack,
   stopListening
@@ -72,7 +89,7 @@ const noteHoldTargetMidi = ref<number | null>(null)
 const pianoKeyboard = ref<PianoKeyboardApi | null>(null)
 const isPitchKeyboardView = ref(false)
 const micHealthDetectionTarget = 10
-const micHealthVolumeThreshold = 0.012
+const micHealthVolumeThreshold = computed(() => microphoneMinimumRms.value)
 const micHealthTimeoutMs = 15000
 let micHealthDetectedFrames = 0
 let micHealthMaxVolume = 0
@@ -142,6 +159,18 @@ async function startListening() {
   beginMicHealthObservation()
 }
 
+function changeMicrophoneSetting(key: MicrophoneSettingKey, value: string | number | boolean) {
+  setMicrophoneSetting(key, value)
+}
+
+async function applyMicrophoneSettings() {
+  if (isListening.value) {
+    stopListening()
+  }
+
+  await startListening()
+}
+
 function beginMicHealthObservation() {
   const observationId = micHealthObservationId + 1
 
@@ -179,7 +208,7 @@ function trackMicHealth(
     outcome,
     detectedFrames: micHealthDetectedFrames,
     maxVolume: Number(micHealthMaxVolume.toFixed(4)),
-    volumeThreshold: micHealthVolumeThreshold,
+    volumeThreshold: micHealthVolumeThreshold.value,
     timeoutMs: micHealthTimeoutMs,
     ...properties
   })
@@ -205,6 +234,7 @@ function togglePitchKeyboardView() {
 }
 
 onMounted(() => {
+  restoreMicrophoneSettings()
   restoreAppPreferences({
     restoreKeyboardInstrument,
     restoreSamplePreset
@@ -221,7 +251,7 @@ watch([isListening, frequency, volume], ([nextListening, nextFrequency, nextVolu
 
   micHealthMaxVolume = Math.max(micHealthMaxVolume, nextVolume)
 
-  if (!nextFrequency || nextVolume < micHealthVolumeThreshold) {
+  if (!nextFrequency || nextVolume < micHealthVolumeThreshold.value) {
     return
   }
 
@@ -281,6 +311,9 @@ onBeforeUnmount(() => {
             :sound-description="t.soundDescription"
             :sound-loading-label="t.soundLoading"
             :show-warmup-report-label="t.showWarmupReport"
+            :show-exercises-label="t.showExercises"
+            :show-keyboard-controls-label="t.showKeyboardControls"
+            :show-volume-meter-label="t.showVolumeMeter"
             :keyboard-instruments="keyboardInstruments"
             :keyboard-instrument-labels="t.keyboardInstruments"
             :sound-presets="samplePresets"
@@ -289,11 +322,31 @@ onBeforeUnmount(() => {
             :selected-sample-preset-id="selectedSamplePresetId"
             :is-keyboard-sampler-loading="isKeyboardSamplerLoading"
             :should-show-warmup-report="shouldShowWarmupReport"
+            :should-show-exercises="shouldShowExercises"
+            :should-show-keyboard-controls="shouldShowKeyboardControls"
+            :should-show-volume-meter="shouldShowVolumeMeter"
+            :microphone-text="t.microphone"
+            :microphone-devices="microphoneDevices"
+            :microphone-device-id="microphoneDeviceId"
+            :microphone-echo-cancellation="microphoneEchoCancellation"
+            :microphone-noise-suppression="microphoneNoiseSuppression"
+            :microphone-auto-gain-control="microphoneAutoGainControl"
+            :microphone-input-gain="microphoneInputGain"
+            :microphone-minimum-rms="microphoneMinimumRms"
+            :is-listening="isListening"
+            :microphone-diagnostic-report="microphoneDiagnosticReport"
+            :microphone-current-rms="volume"
+            :microphone-current-frequency="frequency"
             @set-language="setLanguage"
             @set-note-notation="setNoteNotation"
             @set-keyboard-instrument="selectKeyboardInstrument"
             @set-sample-preset="selectSamplePreset"
             @set-show-warmup-report="setShowWarmupReport"
+            @set-show-exercises="setShowExercises"
+            @set-show-keyboard-controls="setShowKeyboardControls"
+            @set-show-volume-meter="setShowVolumeMeter"
+            @set-microphone-setting="changeMicrophoneSetting"
+            @apply-microphone-settings="applyMicrophoneSettings"
           />
 
           <HeaderInfoMenu
@@ -307,7 +360,11 @@ onBeforeUnmount(() => {
 
       <div class="tuner-content">
 
-        <VolumeMeter :label="t.volume" :active-steps="volumeSteps" />
+        <VolumeMeter
+          v-if="shouldShowVolumeMeter"
+          :label="t.volume"
+          :active-steps="volumeSteps"
+        />
 
         <PitchReadout
           :note="stableDisplayNote"
@@ -315,28 +372,30 @@ onBeforeUnmount(() => {
           :is-visible="isPitchReadoutVisible"
         />
 
-        <WarmupProgram
-          :is-listening="isListening"
-          :frequency="frequency"
-          :cents="cents"
-          :volume="volume"
-          :language="language"
-          :note-notation="noteNotation"
-          :should-show-report="shouldShowWarmupReport"
-          @note-start="startKeyboardNote"
-          @note-end="stopKeyboardNote"
-          @warmup-range-focus="focusWarmupKeyboardRange"
-        />
+        <div v-if="shouldShowExercises" class="exercise-block">
+          <WarmupProgram
+            :is-listening="isListening"
+            :frequency="frequency"
+            :cents="cents"
+            :volume="volume"
+            :language="language"
+            :note-notation="noteNotation"
+            :should-show-report="shouldShowWarmupReport"
+            @note-start="startKeyboardNote"
+            @note-end="stopKeyboardNote"
+            @warmup-range-focus="focusWarmupKeyboardRange"
+          />
 
-        <NoteHoldExercise
-          :is-listening="isListening"
-          :pressed-midi="pressedMidi"
-          :language="language"
-          :note-notation="noteNotation"
-          @note-start="startKeyboardNote"
-          @note-end="stopKeyboardNote"
-          @target-change="setNoteHoldTargetMidi"
-        />
+          <NoteHoldExercise
+            :is-listening="isListening"
+            :pressed-midi="pressedMidi"
+            :language="language"
+            :note-notation="noteNotation"
+            @note-start="startKeyboardNote"
+            @note-end="stopKeyboardNote"
+            @target-change="setNoteHoldTargetMidi"
+          />
+        </div>
 
         <TuningMeter
           :label="t.meterLabel"
@@ -358,6 +417,7 @@ onBeforeUnmount(() => {
           />
 
           <KeyboardControls
+            v-if="shouldShowKeyboardControls"
             :keyboard-label="t.keyboardControl"
             :selected-note-text="t.selectedNote"
             :selected-note-label="selectedDisplayNoteLabel"
@@ -475,6 +535,11 @@ button {
   gap: 8px;
 }
 
+.exercise-block {
+  display: grid;
+  align-content: center;
+}
+
 .view-toggle-button {
   min-width: 56px;
   height: 48px;
@@ -502,6 +567,7 @@ button {
 .tuner.pitch-keyboard-view .volume,
 .tuner.pitch-keyboard-view .warmup-program,
 .tuner.pitch-keyboard-view .note-hold-exercise,
+.tuner.pitch-keyboard-view .exercise-block,
 .tuner.pitch-keyboard-view .keyboard-control-pad {
   display: none;
 }

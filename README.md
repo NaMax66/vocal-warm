@@ -34,6 +34,9 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Pressed key highlighting fades out over about 0.5 seconds to match the short note hold.
 - The selected note is marked on the keyboard with a small red cross.
 - `WarmupProgram.vue` adds a "Warmup" / "Распевка" call-and-response exercise above the tuning rail: it can play 3-5 notes up, waits for the singer, plays the same pattern down, waits again, transposes up by semitone, and can show a copyable text report at the end when enabled in settings.
+- The warmup and note-hold exercises share one settings toggle and are hidden by default; the preference is persisted locally.
+- The on-screen selected-note controls are also hidden by default behind their own settings toggle. Physical keyboard navigation and the selected-note marker remain active independently.
+- The main volume meter is hidden by default behind a separate settings toggle; live RMS remains available inside microphone diagnostics.
 - The note control selects C2-B6 with arrow keys; holding Space sustains the selected note.
 - The selected note for Space control is stored in `localStorage` as `vocalwarm-selected-midi`.
 - The keyboard horizontal scroll position is stored in `localStorage` as `vocalwarm-keyboard-scroll-left`.
@@ -41,6 +44,7 @@ Russian documentation: [README.ru.md](README.ru.md)
 - Pitch detection is implemented with autocorrelation over an `AnalyserNode` time-domain buffer.
 - The analyser uses `fftSize = 4096`.
 - Microphone constraints intentionally disable `echoCancellation`, `noiseSuppression`, and `autoGainControl` for cleaner pitch tracking.
+- The settings menu exposes microphone selection, WebRTC processing toggles, digital input gain, and the RMS detection threshold. It also provides a copyable diagnostic report containing requested constraints, actual track settings/capabilities, AudioContext state, and live signal statistics.
 - Notes are displayed with English note names: `C`, `C#`, `D`, `D#`, `E`, `F`, `F#`, `G`, `G#`, `A`, `A#`, `B`.
 - The UI shows nearest note, octave, frequency in Hz, cents offset, tuning meter, a scrollable C2-B6 piano keyboard, volume meter, status, and microphone errors.
 - The detected note is highlighted on the keyboard when it is within C2-B6.
