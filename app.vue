@@ -627,7 +627,7 @@ button {
   .tuner {
     --tuner-padding: 0px;
 
-    min-height: 100vh;
+    min-height: 100dvh;
     border-right: 0;
     border-left: 0;
     border-radius: 0;
@@ -645,6 +645,7 @@ button {
     align-self: stretch;
     width: 100%;
     margin-top: auto;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   .tuner .error {
